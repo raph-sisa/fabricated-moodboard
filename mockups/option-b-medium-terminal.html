@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Option B: Medium Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #D4A55A;
+    --secondary: #5A8A8A;
+    --accent: #B87333;
+    --bg: #0D0D0D;
+    --surface: #1A1A18;
+    --surface-elevated: #222220;
+    --text-primary: #E8E4DC;
+    --text-secondary: #8F837A;
+    --border: #2A2A27;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* === NAV (with command hint) === */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    background: rgba(13,13,13,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 3rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: var(--primary);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 20px rgba(212,165,90,0.3);
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--primary); }
+
+  /* Command palette trigger */
+  .cmd-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .cmd-trigger:hover { border-color: var(--primary); }
+
+  .cmd-trigger-text {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+  }
+
+  .cmd-trigger kbd {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.1rem 0.35rem;
+  }
+
+  .led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 6px var(--primary), 0 0 12px rgba(212,165,90,0.3);
+    display: inline-block;
+    animation: led-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes led-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* === COMMAND PALETTE OVERLAY === */
+  .cmd-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    display: flex;
+    justify-content: center;
+    padding-top: 20vh;
+  }
+
+  .cmd-palette {
+    width: 520px;
+    max-height: 400px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(212,165,90,0.05);
+  }
+
+  .cmd-input-row {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    gap: 0.5rem;
+  }
+
+  .cmd-prompt {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .cmd-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+  }
+
+  .cmd-results {
+    padding: 0.5rem;
+  }
+
+  .cmd-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .cmd-result:hover, .cmd-result.active {
+    background: var(--surface-elevated);
+  }
+
+  .cmd-result-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cmd-result-icon {
+    width: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+
+  .cmd-result-name {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .cmd-result-hint {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+  }
+
+  .cmd-result-shortcut {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+  }
+
+  .cmd-section-label {
+    padding: 0.5rem 0.75rem 0.25rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* === HERO === */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8rem 3rem 6rem;
+    max-width: 900px;
+    position: relative;
+  }
+
+  .hero-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero h1 {
+    font-family: 'VT323', monospace;
+    font-size: clamp(4rem, 10vw, 8rem);
+    line-height: 0.95;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    letter-spacing: 0.02em;
+  }
+
+  .hero h1 span {
+    color: var(--primary);
+    text-shadow: 0 0 40px rgba(212,165,90,0.2);
+  }
+
+  .hero-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    max-width: 480px;
+    line-height: 1.8;
+    margin-bottom: 3rem;
+  }
+
+  /* Inline terminal prompt */
+  .inline-terminal {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    max-width: 480px;
+    margin-bottom: 2rem;
+  }
+
+  .terminal-line {
+    font-size: 0.75rem;
+    line-height: 2;
+  }
+
+  .terminal-prompt {
+    color: var(--secondary);
+  }
+
+  .terminal-cmd {
+    color: var(--text-primary);
+  }
+
+  .terminal-output {
+    color: var(--text-secondary);
+  }
+
+  .terminal-highlight {
+    color: var(--primary);
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--primary);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* === OLED PANEL === */
+  .oled-panel {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    display: inline-flex;
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .oled-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .oled-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-secondary);
+  }
+
+  .oled-value {
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    color: var(--primary);
+    text-shadow: 0 0 8px rgba(212,165,90,0.4);
+  }
+
+  /* === SIGNUP === */
+  .signup-row {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 420px;
+  }
+
+  .signup-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.65rem 1rem;
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    outline: none;
+  }
+
+  .signup-row input:focus {
+    border-color: var(--primary);
+  }
+
+  .signup-row input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: var(--bg);
+    border: none;
+    border-radius: 3px;
+    padding: 0.65rem 1.25rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* === MODULES === */
+  .modules {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin: 0 3rem 6rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .module {
+    background: var(--surface);
+    padding: 2.5rem 2rem;
+  }
+
+  .module-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .module h3 {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .module p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .module-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1.25rem;
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+  }
+
+  .module-shortcut kbd {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.1rem 0.4rem;
+    color: var(--text-secondary);
+  }
+
+  /* === FOOTER === */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-text {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+  }
+
+  .pcb-traces {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.03;
+    background-image:
+      linear-gradient(90deg, var(--accent) 1px, transparent 1px),
+      linear-gradient(var(--accent) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  .content { position: relative; z-index: 1; }
+
+  .wood-accent {
+    height: 3px;
+    background: linear-gradient(90deg,
+      var(--accent) 0%, #8B6914 25%, var(--accent) 50%, #6B5313 75%, var(--accent) 100%
+    );
+    opacity: 0.4;
+  }
+
+  /* Annotations */
+  .mockup-annotation {
+    position: fixed;
+    right: 1.5rem;
+    background: rgba(90,138,138,0.1);
+    border: 1px solid rgba(90,138,138,0.3);
+    border-radius: 3px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.6rem;
+    color: var(--secondary);
+    letter-spacing: 0.05em;
+    z-index: 200;
+    max-width: 200px;
+  }
+
+  .annotation-1 { top: 6%; }
+  .annotation-2 { top: 30%; }
+  .annotation-3 { top: 55%; }
+  .annotation-4 { top: 80%; }
+</style>
+</head>
+<body>
+  <div class="pcb-traces"></div>
+
+  <div class="content">
+    <!-- Annotations -->
+    <div class="mockup-annotation annotation-1">
+      Cmd+K command palette in the nav — power users can type to navigate.
+    </div>
+    <div class="mockup-annotation annotation-2">
+      Inline terminal showing commands — hints at deeper CLI experience.
+    </div>
+    <div class="mockup-annotation annotation-3">
+      Same OLED panels + warm palette as Option A.
+    </div>
+    <div class="mockup-annotation annotation-4">
+      Module cards show keyboard shortcuts — discoverable CLI navigation.
+    </div>
+
+    <!-- Command Palette Overlay -->
+    <div class="cmd-overlay">
+      <div class="cmd-palette">
+        <div class="cmd-input-row">
+          <span class="cmd-prompt">&gt;</span>
+          <input type="text" class="cmd-input" value="learn" placeholder="Type a command..." readonly>
+        </div>
+        <div class="cmd-results">
+          <div class="cmd-section-label">Navigate</div>
+          <div class="cmd-result active">
+            <div class="cmd-result-left">
+              <span class="cmd-result-icon">&#9656;</span>
+              <div>
+                <div class="cmd-result-name">Learn: Claude Code</div>
+                <div class="cmd-result-hint">What is Claude Code and how it helps you build</div>
+              </div>
+            </div>
+            <span class="cmd-result-shortcut">&#8984;1</span>
+          </div>
+          <div class="cmd-result">
+            <div class="cmd-result-left">
+              <span class="cmd-result-icon">&#9656;</span>
+              <div>
+                <div class="cmd-result-name">Learn: Arduino</div>
+                <div class="cmd-result-hint">Introduction to Arduino hardware platform</div>
+              </div>
+            </div>
+            <span class="cmd-result-shortcut">&#8984;2</span>
+          </div>
+          <div class="cmd-result">
+            <div class="cmd-result-left">
+              <span class="cmd-result-icon">&#9656;</span>
+              <div>
+                <div class="cmd-result-name">Learn: Projects</div>
+                <div class="cmd-result-hint">Browse what you'll build at the workshop</div>
+              </div>
+            </div>
+            <span class="cmd-result-shortcut">&#8984;3</span>
+          </div>
+          <div class="cmd-section-label">Actions</div>
+          <div class="cmd-result">
+            <div class="cmd-result-left">
+              <span class="cmd-result-icon">&#9654;</span>
+              <div>
+                <div class="cmd-result-name">Sign Up for Updates</div>
+                <div class="cmd-result-hint">Get notified when registration opens</div>
+              </div>
+            </div>
+          </div>
+          <div class="cmd-result">
+            <div class="cmd-result-left">
+              <span class="cmd-result-icon">&#128424;</span>
+              <div>
+                <div class="cmd-result-name">Toggle Terminal Mode</div>
+                <div class="cmd-result-hint">Switch to full terminal experience</div>
+              </div>
+            </div>
+            <span class="cmd-result-shortcut">&#8984;T</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav>
+      <div class="nav-logo">FABRICATED</div>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="#">Claude Code</a></li>
+          <li><a href="#">Arduino</a></li>
+          <li><a href="#">Projects</a></li>
+        </ul>
+        <div class="cmd-trigger">
+          <span class="cmd-trigger-text">Navigate...</span>
+          <kbd>&#8984;K</kbd>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-label">
+        <span class="led"></span>
+        Hardware Build Series
+      </div>
+
+      <h1>Build <span>Real</span><br>Hardware.</h1>
+
+      <p class="hero-description">
+        A hands-on workshop in Long Beach where you'll build hardware projects guided by Claude Code. Solder, wire, program, take it home.
+      </p>
+
+      <!-- Inline terminal hint -->
+      <div class="inline-terminal">
+        <div class="terminal-line">
+          <span class="terminal-prompt">fabricated ~</span>
+          <span class="terminal-cmd"> learn arduino</span>
+        </div>
+        <div class="terminal-line">
+          <span class="terminal-output">Loading module: </span>
+          <span class="terminal-highlight">Introduction to Arduino</span>
+          <span class="terminal-output"> ...</span>
+        </div>
+        <div class="terminal-line">
+          <span class="terminal-prompt">fabricated ~</span>
+          <span class="cursor-blink"></span>
+        </div>
+      </div>
+
+      <div class="oled-panel">
+        <div class="oled-item">
+          <span class="oled-label">Location</span>
+          <span class="oled-value">Long Beach, CA</span>
+        </div>
+        <div class="oled-item">
+          <span class="oled-label">Season</span>
+          <span class="oled-value">Summer 2026</span>
+        </div>
+        <div class="oled-item">
+          <span class="oled-label">Status</span>
+          <span class="oled-value">Registering</span>
+        </div>
+      </div>
+
+      <div class="signup-row">
+        <input type="email" placeholder="your@email.com">
+        <button class="btn-primary">Notify Me</button>
+      </div>
+    </section>
+
+    <div class="wood-accent"></div>
+
+    <!-- Modules -->
+    <section class="modules">
+      <div class="module">
+        <div class="module-label">
+          <span class="led"></span>
+          Learn
+        </div>
+        <h3>Claude Code</h3>
+        <p>Your AI pair programmer. Learn how it reads schematics, writes firmware, and debugs circuits alongside you.</p>
+        <div class="module-shortcut">
+          <kbd>&#8984;</kbd><kbd>1</kbd> or type <kbd>learn claude-code</kbd>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-label">
+          <span class="led" style="background:#5A8A8A; box-shadow: 0 0 6px #5A8A8A;"></span>
+          Learn
+        </div>
+        <h3>Arduino</h3>
+        <p>The open-source hardware platform. Microcontrollers, sensors, and actuators — the building blocks of your projects.</p>
+        <div class="module-shortcut">
+          <kbd>&#8984;</kbd><kbd>2</kbd> or type <kbd>learn arduino</kbd>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-label">
+          <span class="led" style="background:#B87333; box-shadow: 0 0 6px #B87333;"></span>
+          Build
+        </div>
+        <h3>Projects</h3>
+        <p>Weather stations, MIDI controllers, LED installations. See what you'll build and take home from the workshop.</p>
+        <div class="module-shortcut">
+          <kbd>&#8984;</kbd><kbd>3</kbd> or type <kbd>projects</kbd>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <span class="footer-text">FABRICATED &copy; 2026</span>
+      <span class="footer-text">Press <kbd style="font-family:'IBM Plex Mono';font-size:0.6rem;background:#1A1A18;border:1px solid #2A2A27;border-radius:3px;padding:0.1rem 0.35rem;color:#8F837A;">&#8984;K</kbd> to navigate</span>
+    </footer>
+  </div>
+</body>
+</html>

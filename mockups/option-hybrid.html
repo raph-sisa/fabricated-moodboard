@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Hybrid: Visual + Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #D4A55A;
+    --primary-dim: rgba(212,165,90,0.12);
+    --secondary: #5A8A8A;
+    --secondary-dim: rgba(90,138,138,0.12);
+    --accent: #B87333;
+    --accent-dim: rgba(184,115,51,0.12);
+    --bg: #0D0D0D;
+    --surface: #151514;
+    --surface-2: #1A1A18;
+    --surface-3: #222220;
+    --text: #E8E4DC;
+    --text-2: #8F837A;
+    --text-3: #5A5650;
+    --text-4: #3A3835;
+    --border: #2A2A27;
+    --border-dim: #1E1E1C;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.6;
+    overflow-x: hidden;
+    /* Make room for terminal drawer */
+    padding-bottom: 0;
+  }
+
+  /* === BACKGROUND === */
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bg-layer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(90deg, rgba(184,115,51,0.02) 1px, transparent 1px),
+      linear-gradient(rgba(184,115,51,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-1 { top: -10%; right: -5%; width: 500px; height: 500px; background: rgba(212,165,90,0.03); }
+  .glow-2 { bottom: 30%; left: -10%; width: 400px; height: 400px; background: rgba(90,138,138,0.02); }
+
+  .page { position: relative; z-index: 1; transition: margin-bottom 0.4s cubic-bezier(0.16,1,0.3,1); }
+  .page.drawer-open { margin-bottom: 340px; }
+
+  /* === DOTS / LEDS === */
+  .dot { width: 4px; height: 4px; border-radius: 50%; display: inline-block; }
+  .dot-amber { background: var(--primary); box-shadow: 0 0 4px var(--primary); }
+  .dot-teal { background: var(--secondary); box-shadow: 0 0 4px var(--secondary); }
+  .dot-copper { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  .dot-off { background: var(--text-4); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.35} }
+  .dot-pulse { animation: pulse 2.5s ease-in-out infinite; }
+
+  /* === NAV === */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(20px) saturate(1.2);
+    border-bottom: 1px solid var(--border-dim);
+    height: 48px;
+  }
+
+  .nav-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+  }
+
+  .nav-left { display: flex; align-items: center; gap: 2rem; }
+
+  .nav-logo {
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    color: var(--primary);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 24px rgba(212,165,90,0.15);
+  }
+
+  .nav-tabs {
+    display: flex;
+    list-style: none;
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    overflow: hidden;
+    height: 30px;
+  }
+
+  .nav-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.85rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    text-decoration: none;
+    border-right: 1px solid var(--border-dim);
+    transition: all 0.2s;
+  }
+
+  .nav-tab:last-child { border-right: none; }
+  .nav-tab:hover { color: var(--text-2); background: rgba(255,255,255,0.02); }
+  .nav-tab.active { color: var(--primary); background: var(--primary-dim); }
+
+  .nav-right { display: flex; align-items: center; gap: 1rem; }
+
+  /* Terminal toggle button in nav */
+  .terminal-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    color: var(--text-3);
+    font-size: 0.55rem;
+  }
+
+  .terminal-toggle:hover { border-color: var(--primary); color: var(--text-2); }
+  .terminal-toggle.active { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+
+  .terminal-toggle kbd {
+    font-family: inherit;
+    font-size: 0.5rem;
+    color: var(--text-4);
+    background: var(--bg);
+    border: 1px solid var(--border-dim);
+    border-radius: 2px;
+    padding: 0.05rem 0.3rem;
+  }
+
+  .nav-cta {
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--bg);
+    background: var(--primary);
+    padding: 0.35rem 1rem;
+    border-radius: 3px;
+    text-decoration: none;
+    transition: box-shadow 0.2s;
+  }
+
+  .nav-cta:hover { box-shadow: 0 0 20px rgba(212,165,90,0.25); }
+
+  /* === HERO === */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+  }
+
+  .hero-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 5rem;
+    align-items: center;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.5rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .hero h1 {
+    font-family: 'VT323', monospace;
+    font-size: 7rem;
+    line-height: 0.9;
+    margin-bottom: 2rem;
+  }
+
+  .hero h1 .hi { color: var(--primary); text-shadow: 0 0 80px rgba(212,165,90,0.1); }
+
+  .hero-sub {
+    font-size: 0.85rem;
+    color: var(--text-2);
+    line-height: 1.85;
+    max-width: 440px;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+
+  .signup { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
+
+  .input {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 0.85rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.72rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-dim); }
+  .input::placeholder { color: var(--text-4); }
+
+  .btn {
+    background: var(--primary);
+    color: var(--bg);
+    border: none;
+    border-radius: 3px;
+    padding: 0.55rem 1.25rem;
+    font-family: inherit;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .btn:hover { box-shadow: 0 0 24px rgba(212,165,90,0.25); }
+
+  .signup-note { font-size: 0.55rem; color: var(--text-4); }
+
+  /* === KORG PANEL === */
+  .korg-panel {
+    background: linear-gradient(165deg, #141413 0%, #0e0e0d 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+
+  .korg-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0.45rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .korg-header-left { display: flex; align-items: center; gap: 0.5rem; }
+
+  .korg-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  .korg-status {
+    font-size: 0.45rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .korg-body { padding: 1.25rem; }
+
+  .oled {
+    background: #000;
+    border: 1px solid #1a1a18;
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .oled-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 0.5rem;
+  }
+
+  .oled-lbl {
+    font-size: 0.4rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 0.15rem;
+  }
+
+  .oled-val {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    color: var(--primary);
+    text-shadow: 0 0 8px rgba(212,165,90,0.4);
+    line-height: 1.1;
+  }
+
+  .oled-val-sm {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--secondary);
+    text-shadow: 0 0 6px rgba(90,138,138,0.3);
+  }
+
+  .countdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .cd-item { text-align: center; }
+
+  .cd-num {
+    font-family: 'VT323', monospace;
+    font-size: 1.8rem;
+    color: var(--primary);
+    text-shadow: 0 0 6px rgba(212,165,90,0.3);
+    line-height: 1;
+  }
+
+  .cd-unit {
+    font-size: 0.4rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-top: 0.15rem;
+  }
+
+  .korg-section {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-dim);
+  }
+
+  .knob-row { display: flex; gap: 1rem; justify-content: center; }
+  .knob-group { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+
+  .knob {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 38%, #3a3a38, #161614);
+    border: 2px solid #2a2a28;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    position: relative;
+  }
+
+  .knob::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 8px;
+    background: var(--text);
+    border-radius: 1px;
+    opacity: 0.5;
+  }
+
+  .knob-name {
+    font-size: 0.38rem;
+    color: var(--text-4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .steps { display: flex; gap: 0.3rem; justify-content: center; margin-top: 0.6rem; }
+
+  .step {
+    width: 13px;
+    height: 13px;
+    border-radius: 2px;
+    border: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-on { background: var(--primary-dim); border-color: rgba(212,165,90,0.25); }
+  .step-active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 6px rgba(212,165,90,0.4); }
+
+  .step-dot { width: 3px; height: 3px; border-radius: 50%; }
+  .step-on .step-dot { background: var(--primary); }
+  .step-active .step-dot { background: var(--bg); }
+
+  /* === DIVIDERS === */
+  .wood {
+    height: 5px;
+    background: linear-gradient(90deg,
+      var(--bg) 0%, rgba(184,115,51,0.15) 10%, rgba(139,105,20,0.2) 30%,
+      rgba(184,115,51,0.25) 50%, rgba(139,105,20,0.2) 70%,
+      rgba(184,115,51,0.15) 90%, var(--bg) 100%
+    );
+  }
+
+  /* === SECTIONS === */
+  .section { padding: 6rem 2rem; }
+  .section-alt { background: var(--surface); border-top: 1px solid var(--border-dim); border-bottom: 1px solid var(--border-dim); }
+  .section-inner { max-width: 1140px; margin: 0 auto; }
+
+  .section-eyebrow {
+    font-size: 0.45rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-title {
+    font-family: 'VT323', monospace;
+    font-size: 2.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-desc {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    max-width: 480px;
+    line-height: 1.85;
+    margin-bottom: 3rem;
+  }
+
+  /* Modules */
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+
+  .panel-bar {
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0.5rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-bar-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .panel-bar-meta { font-size: 0.45rem; color: var(--text-4); }
+
+  .module-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+  .mod {
+    padding: 2.25rem 1.75rem;
+    border-right: 1px solid var(--border-dim);
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+
+  .mod:last-child { border-right: none; }
+  .mod:hover { background: var(--surface-3); }
+
+  .mod-eyebrow {
+    font-size: 0.45rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .mod h3 { font-family: 'VT323', monospace; font-size: 1.7rem; margin-bottom: 0.6rem; }
+
+  .mod p { font-size: 0.68rem; color: var(--text-2); line-height: 1.75; margin-bottom: 1.25rem; }
+
+  .mod-footer { display: flex; align-items: center; justify-content: space-between; }
+
+  .mod-link {
+    color: var(--primary);
+    font-size: 0.6rem;
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: gap 0.2s;
+  }
+
+  .mod-link:hover { gap: 0.65rem; }
+
+  .mod-meta {
+    font-size: 0.45rem;
+    color: var(--text-4);
+    border: 1px solid var(--border-dim);
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border-dim);
+    padding: 2.5rem 2rem 2rem;
+  }
+
+  .footer-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .footer-logo {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--primary);
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+  }
+
+  .footer-text {
+    font-size: 0.6rem;
+    color: var(--text-3);
+    line-height: 1.7;
+    max-width: 240px;
+  }
+
+  .footer-links { display: flex; gap: 3rem; }
+
+  .footer-col-title {
+    font-size: 0.45rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.5rem;
+  }
+
+  .footer-col a {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 0.2rem 0;
+  }
+
+  .footer-col a:hover { color: var(--primary); }
+
+  /* =========================================
+     TERMINAL DRAWER
+     The key hybrid element — slides up from
+     the bottom. Always available via ` key
+     or the nav button.
+     ========================================= */
+  .drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    transform: translateY(calc(100% - 36px));
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .drawer.open {
+    transform: translateY(0);
+  }
+
+  /* Drawer handle / collapsed bar */
+  .drawer-handle {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .drawer-handle:hover { background: var(--surface-2); }
+
+  .drawer-handle-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .drawer-handle-icon {
+    font-size: 0.7rem;
+    color: var(--primary);
+    transition: transform 0.3s;
+  }
+
+  .drawer.open .drawer-handle-icon { transform: rotate(180deg); }
+
+  .drawer-handle-label {
+    font-size: 0.55rem;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+  }
+
+  .drawer-handle-shortcut {
+    font-size: 0.5rem;
+    color: var(--text-4);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .drawer-handle-shortcut kbd {
+    font-family: inherit;
+    font-size: 0.5rem;
+    color: var(--text-4);
+    background: var(--bg);
+    border: 1px solid var(--border-dim);
+    border-radius: 2px;
+    padding: 0.02rem 0.3rem;
+  }
+
+  /* Terminal inside drawer */
+  .drawer-terminal {
+    background: var(--bg);
+    border-top: 1px solid var(--border-dim);
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-tabs {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0 0.5rem;
+    height: 28px;
+  }
+
+  .drawer-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0 0.75rem;
+    font-size: 0.55rem;
+    color: var(--text-4);
+    border-right: 1px solid var(--border-dim);
+    cursor: pointer;
+  }
+
+  .drawer-tab.active {
+    color: var(--text);
+    background: var(--bg);
+    border-bottom: 1px solid var(--primary);
+    margin-bottom: -1px;
+  }
+
+  .drawer-tab-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+  }
+
+  .drawer-body {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+    font-size: 0.75rem;
+    line-height: 1.75;
+  }
+
+  .ln { margin-bottom: 0.1rem; white-space: pre-wrap; }
+  .blank { height: 0.5rem; }
+
+  .prompt { color: var(--secondary); }
+  .cmd { color: var(--text); font-weight: 500; }
+  .out { color: var(--text-2); }
+  .hi { color: var(--primary); }
+  .teal { color: var(--secondary); }
+  .copper { color: var(--accent); }
+  .dim { color: var(--text-3); }
+  .bold { font-weight: 600; color: var(--text); }
+
+  .cursor {
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: var(--primary);
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .drawer-statusbar {
+    background: var(--surface);
+    border-top: 1px solid var(--border-dim);
+    padding: 0.25rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.5rem;
+    color: var(--text-4);
+  }
+
+  .drawer-status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .drawer-status-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 3px var(--primary);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  /* Context indicator — shows what page you're on */
+  .drawer-context {
+    padding: 0.5rem 1.25rem;
+    background: rgba(212,165,90,0.04);
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .drawer-context-text {
+    font-size: 0.55rem;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .drawer-context-hint {
+    font-size: 0.5rem;
+    color: var(--text-4);
+  }
+
+  /* === ANNOTATION OVERLAY (for mockup only) === */
+  .mockup-note {
+    position: fixed;
+    z-index: 300;
+    background: rgba(184,115,51,0.08);
+    border: 1px solid rgba(184,115,51,0.2);
+    border-radius: 4px;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.55rem;
+    color: var(--accent);
+    max-width: 220px;
+    line-height: 1.5;
+    pointer-events: none;
+  }
+
+  .note-1 { top: 8px; right: 280px; }
+  .note-2 { bottom: 345px; left: 50%; transform: translateX(-50%); }
+  .note-3 { bottom: 80px; right: 20px; }
+</style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-layer"></div>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+
+  <!-- Mockup annotations -->
+  <div class="mockup-note note-1">
+    Terminal toggle in nav. Click or press <kbd style="font-family:inherit;font-size:inherit;background:rgba(184,115,51,0.15);border:1px solid rgba(184,115,51,0.3);border-radius:2px;padding:0 0.25rem;color:inherit;">`</kbd> to open/close the drawer.
+  </div>
+  <div class="mockup-note note-2">
+    The drawer slides up from the bottom. The visual site above it shifts up to make room. Both exist simultaneously.
+  </div>
+  <div class="mockup-note note-3">
+    Terminal is context-aware — it knows what page you're on and suggests relevant commands.
+  </div>
+
+  <!-- === MAIN PAGE (Option A style) === -->
+  <div class="page drawer-open">
+
+    <!-- NAV -->
+    <nav>
+      <div class="nav-inner">
+        <div class="nav-left">
+          <span class="nav-logo">FABRICATED</span>
+          <ul class="nav-tabs">
+            <li><a href="#" class="nav-tab active"><span class="dot dot-amber dot-pulse"></span> Home</a></li>
+            <li><a href="#" class="nav-tab"><span class="dot dot-teal"></span> Claude Code</a></li>
+            <li><a href="#" class="nav-tab"><span class="dot dot-teal"></span> Arduino</a></li>
+            <li><a href="#" class="nav-tab"><span class="dot dot-copper"></span> Projects</a></li>
+          </ul>
+        </div>
+        <div class="nav-right">
+          <button class="terminal-toggle active">
+            <span style="font-size:0.7rem;">&#9646;</span>
+            Terminal
+            <kbd>`</kbd>
+          </button>
+          <a href="#" class="nav-cta">Register</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-eyebrow">
+            <span class="dot dot-amber dot-pulse"></span>
+            Summer 2026 &mdash; Long Beach, CA
+          </div>
+          <h1>Build<br><span class="hi">Real</span><br>Hardware.</h1>
+          <p class="hero-sub">
+            A hands-on workshop where you build hardware projects guided by <strong>Claude Code</strong>. Solder, wire, program &mdash; <strong>take it home</strong>.
+          </p>
+          <div class="signup">
+            <input type="email" class="input" placeholder="your@email.com">
+            <button class="btn">Notify Me</button>
+          </div>
+          <p class="signup-note">One email when registration opens. No spam.</p>
+        </div>
+
+        <!-- Korg Panel -->
+        <div class="korg-panel">
+          <div class="korg-header">
+            <div class="korg-header-left">
+              <span class="dot dot-amber dot-pulse"></span>
+              <span class="korg-label">Workshop Status</span>
+            </div>
+            <span class="korg-status"><span class="dot dot-amber" style="width:3px;height:3px;"></span> Live</span>
+          </div>
+          <div class="korg-body">
+            <div class="oled">
+              <div class="oled-row">
+                <div><div class="oled-lbl">Location</div><div class="oled-val">Long Beach, CA</div></div>
+                <div style="text-align:right"><div class="oled-lbl">Status</div><div class="oled-val-sm">Registering</div></div>
+              </div>
+              <div class="oled-lbl" style="margin-top:0.5rem">Countdown</div>
+              <div class="countdown">
+                <div class="cd-item"><div class="cd-num">127</div><div class="cd-unit">Days</div></div>
+                <div class="cd-item"><div class="cd-num">14</div><div class="cd-unit">Hrs</div></div>
+                <div class="cd-item"><div class="cd-num">32</div><div class="cd-unit">Min</div></div>
+                <div class="cd-item"><div class="cd-num">08</div><div class="cd-unit">Sec</div></div>
+              </div>
+            </div>
+            <div class="korg-section">
+              <div class="korg-label">Signal Path</div>
+              <div class="knob-row" style="margin-top:0.5rem">
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Learn</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Build</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Solder</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Code</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Ship</span></div>
+              </div>
+            </div>
+            <div class="korg-section">
+              <div class="korg-label">Sequence</div>
+              <div class="steps">
+                <div class="step step-active"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="wood"></div>
+
+    <!-- MODULES -->
+    <section class="section">
+      <div class="section-inner">
+        <div class="section-eyebrow"><span class="dot dot-teal"></span> Explore</div>
+        <h2 class="section-title">Get Started</h2>
+        <p class="section-desc">Learn the tools before the workshop. Self-paced modules — dive in whenever you're ready.</p>
+
+        <div class="panel">
+          <div class="panel-bar">
+            <span class="panel-bar-label"><span class="dot dot-teal"></span> Learning Modules</span>
+            <span class="panel-bar-meta">3 modules &middot; self-paced</span>
+          </div>
+          <div class="module-grid">
+            <div class="mod">
+              <div class="mod-eyebrow"><span class="dot dot-teal"></span> Module 01</div>
+              <h3>Claude Code</h3>
+              <p>Your AI pair programmer. How it reads schematics, writes firmware, and debugs alongside you.</p>
+              <div class="mod-footer">
+                <a href="#" class="mod-link">Begin &rarr;</a>
+                <span class="mod-meta">5 lessons</span>
+              </div>
+            </div>
+            <div class="mod">
+              <div class="mod-eyebrow"><span class="dot dot-teal"></span> Module 02</div>
+              <h3>Arduino</h3>
+              <p>Microcontrollers, sensors, actuators. The open-source hardware platform and your building blocks.</p>
+              <div class="mod-footer">
+                <a href="#" class="mod-link">Begin &rarr;</a>
+                <span class="mod-meta">8 lessons</span>
+              </div>
+            </div>
+            <div class="mod">
+              <div class="mod-eyebrow"><span class="dot dot-copper"></span> Module 03</div>
+              <h3>Electronics</h3>
+              <p>Voltage, current, resistance. Reading schematics. Breadboard basics. The fundamentals.</p>
+              <div class="mod-footer">
+                <a href="#" class="mod-link">Begin &rarr;</a>
+                <span class="mod-meta">6 lessons</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-inner">
+        <div>
+          <div class="footer-logo">FABRICATED</div>
+          <p class="footer-text">Hardware build series. AI + physical making. Long Beach, CA.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <div class="footer-col-title">Learn</div>
+            <a href="#">Claude Code</a>
+            <a href="#">Arduino</a>
+            <a href="#">Electronics</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-col-title">Build</div>
+            <a href="#">Weather Station</a>
+            <a href="#">MIDI Controller</a>
+            <a href="#">LED Installation</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-col-title">Connect</div>
+            <a href="#">GitHub</a>
+            <a href="#">Discord</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===========================
+       TERMINAL DRAWER
+       Slides up from bottom
+       =========================== -->
+  <div class="drawer open">
+    <div class="drawer-handle">
+      <div class="drawer-handle-left">
+        <span class="drawer-handle-icon">&#9650;</span>
+        <span class="drawer-handle-label">Terminal</span>
+      </div>
+      <div class="drawer-handle-shortcut">
+        Press <kbd>`</kbd> to toggle
+      </div>
+    </div>
+
+    <div class="drawer-terminal">
+      <!-- Context bar -->
+      <div class="drawer-context">
+        <span class="drawer-context-text">
+          <span class="dot dot-amber dot-pulse"></span>
+          Viewing: Home
+        </span>
+        <span class="drawer-context-hint">Terminal commands navigate the site &middot; type "help" to start</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="drawer-tabs">
+        <div class="drawer-tab active">
+          <span class="drawer-tab-dot" style="background:var(--primary);box-shadow:0 0 3px var(--primary);"></span>
+          main
+        </div>
+        <div class="drawer-tab">
+          <span class="drawer-tab-dot" style="background:var(--text-4);"></span>
+          learn
+        </div>
+      </div>
+
+      <!-- Terminal output -->
+      <div class="drawer-body">
+        <div class="ln"><span class="dim">fabricated terminal v1.0 — type "help" for commands</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">projects --list</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Workshop projects (3 available):</span></div>
+        <div class="blank"></div>
+        <div class="ln">  <span class="hi">01</span>  <span class="bold">Weather Station</span>       <span class="dim">beginner &middot; temperature, humidity, OLED</span></div>
+        <div class="ln">  <span class="teal">02</span>  <span class="bold">MIDI Controller</span>       <span class="dim">intermediate &middot; knobs, buttons, USB-MIDI</span></div>
+        <div class="ln">  <span class="copper">03</span>  <span class="bold">LED Installation</span>      <span class="dim">intermediate &middot; addressable LEDs, sound-reactive</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="dim">  Type </span><span class="teal">projects &lt;name&gt;</span><span class="dim"> for details, or click a project card above.</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">learn arduino --lesson 1</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Navigating to </span><span class="hi">Arduino &rarr; Lesson 01: What is Arduino?</span></div>
+        <div class="ln"><span class="dim">  (The page above will update. You can also click the nav tabs.)</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cursor"></span></div>
+      </div>
+
+      <!-- Status bar -->
+      <div class="drawer-statusbar">
+        <div class="drawer-status-item">
+          <span class="drawer-status-dot"></span>
+          connected
+        </div>
+        <div class="drawer-status-item">
+          theme: amber &middot; page: home &middot; "help" for commands
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

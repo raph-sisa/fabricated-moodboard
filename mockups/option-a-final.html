@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Option A Final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #D4A55A;
+    --primary-dim: rgba(212,165,90,0.12);
+    --primary-glow: rgba(212,165,90,0.06);
+    --secondary: #5A8A8A;
+    --secondary-dim: rgba(90,138,138,0.12);
+    --accent: #B87333;
+    --accent-dim: rgba(184,115,51,0.12);
+    --bg: #0D0D0D;
+    --surface: #151514;
+    --surface-2: #1A1A18;
+    --surface-3: #222220;
+    --text: #E8E4DC;
+    --text-2: #8F837A;
+    --text-3: #5A5650;
+    --text-4: #3A3835;
+    --border: #2A2A27;
+    --border-dim: #1E1E1C;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* === BACKGROUND LAYER === */
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Subtle PCB grid */
+  .bg-layer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(90deg, rgba(184,115,51,0.025) 1px, transparent 1px),
+      linear-gradient(rgba(184,115,51,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Copper trace lines */
+  .trace { position: fixed; width: 1px; top: 0; height: 100%; pointer-events: none; z-index: 0; }
+  .trace-1 { left: 20%; background: linear-gradient(to bottom, transparent, rgba(184,115,51,0.06) 30%, rgba(184,115,51,0.06) 70%, transparent); }
+  .trace-2 { left: 80%; background: linear-gradient(to bottom, transparent 20%, rgba(184,115,51,0.04) 50%, transparent 80%); }
+
+  /* Ambient glow */
+  .glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-1 { top: -10%; right: -5%; width: 500px; height: 500px; background: rgba(212,165,90,0.04); }
+  .glow-2 { bottom: 20%; left: -10%; width: 400px; height: 400px; background: rgba(90,138,138,0.03); }
+
+  .content { position: relative; z-index: 1; }
+
+  /* === NAV === */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(20px) saturate(1.2);
+    border-bottom: 1px solid var(--border-dim);
+    height: 48px;
+  }
+
+  .nav-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+  }
+
+  .nav-left { display: flex; align-items: center; gap: 2rem; }
+
+  .nav-logo {
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    color: var(--primary);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 24px rgba(212,165,90,0.15);
+  }
+
+  /* Synth-tab nav */
+  .nav-tabs {
+    display: flex;
+    list-style: none;
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    overflow: hidden;
+    height: 30px;
+  }
+
+  .nav-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.85rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    text-decoration: none;
+    border-right: 1px solid var(--border-dim);
+    transition: all 0.2s;
+  }
+
+  .nav-tab:last-child { border-right: none; }
+  .nav-tab:hover { color: var(--text-2); background: rgba(255,255,255,0.02); }
+  .nav-tab.active { color: var(--primary); background: var(--primary-dim); }
+
+  .dot { width: 4px; height: 4px; border-radius: 50%; }
+  .dot-amber { background: var(--primary); box-shadow: 0 0 4px var(--primary); }
+  .dot-teal { background: var(--secondary); box-shadow: 0 0 4px var(--secondary); }
+  .dot-copper { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  .dot-off { background: var(--text-4); }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+  .dot-pulse { animation: pulse 2.5s ease-in-out infinite; }
+
+  .nav-cta {
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--bg);
+    background: var(--primary);
+    padding: 0.35rem 1rem;
+    border-radius: 3px;
+    text-decoration: none;
+    transition: box-shadow 0.2s;
+  }
+
+  .nav-cta:hover { box-shadow: 0 0 20px rgba(212,165,90,0.25); }
+
+  /* === HERO === */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+  }
+
+  .hero-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 5rem;
+    align-items: center;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.5rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .hero h1 {
+    font-family: 'VT323', monospace;
+    font-size: 7rem;
+    line-height: 0.9;
+    margin-bottom: 2rem;
+    letter-spacing: 0.02em;
+  }
+
+  .hero h1 .hi { color: var(--primary); text-shadow: 0 0 80px rgba(212,165,90,0.1); }
+
+  .hero-sub {
+    font-size: 0.85rem;
+    color: var(--text-2);
+    line-height: 1.85;
+    max-width: 440px;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+
+  /* Signup */
+  .signup { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; }
+
+  .input {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 0.85rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.72rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-dim); }
+  .input::placeholder { color: var(--text-4); }
+
+  .btn {
+    background: var(--primary);
+    color: var(--bg);
+    border: none;
+    border-radius: 3px;
+    padding: 0.55rem 1.25rem;
+    font-family: inherit;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:hover { box-shadow: 0 0 24px rgba(212,165,90,0.25); }
+
+  .signup-note { font-size: 0.55rem; color: var(--text-4); }
+
+  /* === HERO PANEL (Korg Control Surface) === */
+  .korg-panel {
+    background: linear-gradient(165deg, #141413 0%, #0e0e0d 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+
+  .korg-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0.45rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .korg-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .korg-header-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  .korg-header-status {
+    font-size: 0.45rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .korg-body { padding: 1.25rem; }
+
+  /* OLED screen area */
+  .oled {
+    background: #000;
+    border: 1px solid #1a1a18;
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .oled-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 0.6rem;
+  }
+
+  .oled-label {
+    font-size: 0.4rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 0.2rem;
+  }
+
+  .oled-val {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    color: var(--primary);
+    text-shadow: 0 0 8px rgba(212,165,90,0.4);
+    line-height: 1.1;
+  }
+
+  .oled-val-sm {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--secondary);
+    text-shadow: 0 0 6px rgba(90,138,138,0.3);
+  }
+
+  .oled-waveform { width: 100%; margin: 0.5rem 0; }
+
+  /* Countdown */
+  .countdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .cd-item { text-align: center; }
+
+  .cd-num {
+    font-family: 'VT323', monospace;
+    font-size: 1.8rem;
+    color: var(--primary);
+    text-shadow: 0 0 6px rgba(212,165,90,0.3);
+    line-height: 1;
+  }
+
+  .cd-unit {
+    font-size: 0.4rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-top: 0.2rem;
+  }
+
+  .cd-sep {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    color: var(--text-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Knob section */
+  .korg-section {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-dim);
+  }
+
+  .korg-section-label {
+    font-size: 0.4rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 0.75rem;
+  }
+
+  .knob-row { display: flex; gap: 1rem; justify-content: center; }
+
+  .knob-group { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+
+  .knob {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 38%, #3a3a38, #161614);
+    border: 2px solid #2a2a28;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.03);
+    position: relative;
+  }
+
+  .knob::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 9px;
+    background: var(--text);
+    border-radius: 1px;
+    opacity: 0.6;
+  }
+
+  .knob-name {
+    font-size: 0.4rem;
+    color: var(--text-4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Step LEDs */
+  .steps {
+    display: flex;
+    gap: 0.3rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
+
+  .step {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-on { background: var(--primary-dim); border-color: rgba(212,165,90,0.25); }
+  .step-active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 6px rgba(212,165,90,0.4); }
+
+  .step-dot { width: 3px; height: 3px; border-radius: 50%; }
+  .step-on .step-dot { background: var(--primary); }
+  .step-active .step-dot { background: var(--bg); }
+
+  /* === WOOD DIVIDER === */
+  .wood {
+    height: 6px;
+    background: linear-gradient(90deg,
+      var(--bg) 0%,
+      rgba(184,115,51,0.15) 10%,
+      rgba(139,105,20,0.2) 25%,
+      rgba(184,115,51,0.25) 40%,
+      rgba(139,105,20,0.2) 55%,
+      rgba(184,115,51,0.25) 70%,
+      rgba(139,105,20,0.2) 85%,
+      rgba(184,115,51,0.15) 95%,
+      var(--bg) 100%
+    );
+    position: relative;
+  }
+
+  .wood::before, .wood::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+  }
+
+  .wood::before { left: 10%; background: rgba(184,115,51,0.1); }
+  .wood::after { right: 10%; background: rgba(184,115,51,0.1); }
+
+  /* === SECTIONS === */
+  .section { padding: 6rem 2rem; }
+  .section-alt { background: var(--surface); border-top: 1px solid var(--border-dim); border-bottom: 1px solid var(--border-dim); }
+
+  .section-inner { max-width: 1140px; margin: 0 auto; }
+
+  .section-eyebrow {
+    font-size: 0.45rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-title {
+    font-family: 'VT323', monospace;
+    font-size: 2.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-desc {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    max-width: 480px;
+    line-height: 1.85;
+    margin-bottom: 3rem;
+  }
+
+  /* === MODULE PANEL === */
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+
+  .panel-bar {
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0.5rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-bar-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .panel-bar-meta {
+    font-size: 0.45rem;
+    color: var(--text-4);
+    letter-spacing: 0.1em;
+  }
+
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .mod {
+    padding: 2.25rem 1.75rem;
+    border-right: 1px solid var(--border-dim);
+    transition: background 0.3s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .mod:last-child { border-right: none; }
+  .mod:hover { background: var(--surface-3); }
+
+  /* Active module indicator - top edge glow */
+  .mod.mod-active::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--primary);
+    box-shadow: 0 0 12px var(--primary-dim);
+  }
+
+  .mod-eyebrow {
+    font-size: 0.45rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .mod h3 {
+    font-family: 'VT323', monospace;
+    font-size: 1.7rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .mod p {
+    font-size: 0.68rem;
+    color: var(--text-2);
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+  }
+
+  .mod-footer { display: flex; align-items: center; justify-content: space-between; }
+
+  .mod-link {
+    color: var(--primary);
+    font-size: 0.6rem;
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: gap 0.2s;
+  }
+
+  .mod-link:hover { gap: 0.65rem; }
+
+  .mod-meta {
+    font-size: 0.45rem;
+    color: var(--text-4);
+    border: 1px solid var(--border-dim);
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Progress indicator inside module */
+  .mod-progress {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mod-progress-track {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .mod-progress-fill { height: 100%; background: var(--primary); border-radius: 1px; }
+
+  .mod-progress-label { font-size: 0.5rem; color: var(--text-4); }
+
+  /* === PROJECTS === */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+
+  .proj {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .proj:hover {
+    border-color: rgba(212,165,90,0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .proj-screen {
+    background: #000;
+    border-bottom: 1px solid var(--border-dim);
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .proj-screen-label {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.75rem;
+    font-size: 0.4rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-4);
+  }
+
+  .proj-screen-diff {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    font-size: 0.4rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+  }
+
+  /* ASCII art inside project screens */
+  .proj-ascii {
+    font-size: 0.5rem;
+    line-height: 1.15;
+    opacity: 0.6;
+    text-align: center;
+  }
+
+  .proj-body { padding: 1.25rem; }
+
+  .proj-name {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .proj-desc {
+    font-size: 0.65rem;
+    color: var(--text-2);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  .proj-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+
+  .proj-tag {
+    font-size: 0.45rem;
+    color: var(--text-3);
+    border: 1px solid var(--border);
+    padding: 0.12rem 0.45rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  /* === WORKSHOP DETAILS === */
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .detail-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .detail-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 6px 6px 0 0;
+  }
+
+  .detail-card.card-amber::before { background: var(--primary); box-shadow: 0 0 12px var(--primary-dim); }
+  .detail-card.card-teal::before { background: var(--secondary); box-shadow: 0 0 12px var(--secondary-dim); }
+  .detail-card.card-copper::before { background: var(--accent); box-shadow: 0 0 12px var(--accent-dim); }
+
+  .detail-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .detail-title {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .detail-text {
+    font-size: 0.7rem;
+    color: var(--text-2);
+    line-height: 1.75;
+  }
+
+  .detail-list {
+    list-style: none;
+    margin-top: 1rem;
+  }
+
+  .detail-list li {
+    font-size: 0.68rem;
+    color: var(--text-2);
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .detail-list li:last-child { border-bottom: none; }
+
+  /* === TESTIMONIAL / QUOTE === */
+  .quote-section {
+    padding: 5rem 2rem;
+    text-align: center;
+  }
+
+  .quote-section-inner {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .quote-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .quote-attr {
+    font-size: 0.65rem;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+  }
+
+  /* === FOOTER === */
+  footer {
+    border-top: 1px solid var(--border-dim);
+    padding: 3rem 2rem 2rem;
+  }
+
+  .footer-inner {
+    max-width: 1140px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.5fr repeat(3, 1fr);
+    gap: 3rem;
+  }
+
+  .footer-brand-logo {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: var(--primary);
+    letter-spacing: 0.12em;
+    margin-bottom: 0.75rem;
+  }
+
+  .footer-brand-text {
+    font-size: 0.65rem;
+    color: var(--text-3);
+    line-height: 1.7;
+    max-width: 260px;
+  }
+
+  .footer-col-title {
+    font-size: 0.45rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.75rem;
+  }
+
+  .footer-col a {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 0.25rem 0;
+    transition: color 0.2s;
+  }
+
+  .footer-col a:hover { color: var(--primary); }
+
+  .footer-bottom {
+    max-width: 1140px;
+    margin: 2rem auto 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-dim);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.5rem;
+    color: var(--text-4);
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-layer"></div>
+  <div class="trace trace-1"></div>
+  <div class="trace trace-2"></div>
+  <div class="glow-orb glow-1"></div>
+  <div class="glow-orb glow-2"></div>
+
+  <div class="content">
+
+    <!-- NAV -->
+    <nav>
+      <div class="nav-inner">
+        <div class="nav-left">
+          <span class="nav-logo">FABRICATED</span>
+          <ul class="nav-tabs">
+            <li><a href="#" class="nav-tab active"><span class="dot dot-amber dot-pulse"></span> Home</a></li>
+            <li><a href="#" class="nav-tab"><span class="dot dot-teal"></span> Claude Code</a></li>
+            <li><a href="#" class="nav-tab"><span class="dot dot-teal"></span> Arduino</a></li>
+            <li><a href="#" class="nav-tab"><span class="dot dot-copper"></span> Projects</a></li>
+          </ul>
+        </div>
+        <a href="#" class="nav-cta">Register</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-eyebrow">
+            <span class="dot dot-amber dot-pulse"></span>
+            Summer 2026 &mdash; Long Beach, CA
+          </div>
+          <h1>Build<br><span class="hi">Real</span><br>Hardware.</h1>
+          <p class="hero-sub">
+            A hands-on workshop where you build hardware projects guided by <strong>Claude Code</strong>. Solder, wire, program &mdash; <strong>take it home</strong>.
+          </p>
+          <div class="signup">
+            <input type="email" class="input" placeholder="your@email.com">
+            <button class="btn">Notify Me</button>
+          </div>
+          <p class="signup-note">One email when registration opens. No spam.</p>
+        </div>
+
+        <!-- Korg Panel -->
+        <div class="korg-panel">
+          <div class="korg-header">
+            <div class="korg-header-left">
+              <span class="dot dot-amber dot-pulse"></span>
+              <span class="korg-header-label">Workshop Status</span>
+            </div>
+            <span class="korg-header-status">
+              <span class="dot dot-amber" style="width:3px;height:3px;"></span>
+              Live
+            </span>
+          </div>
+          <div class="korg-body">
+            <!-- OLED readouts -->
+            <div class="oled">
+              <div class="oled-row">
+                <div>
+                  <div class="oled-label">Location</div>
+                  <div class="oled-val">Long Beach, CA</div>
+                </div>
+                <div style="text-align:right">
+                  <div class="oled-label">Status</div>
+                  <div class="oled-val-sm">Registering</div>
+                </div>
+              </div>
+
+              <svg class="oled-waveform" viewBox="0 0 340 30" style="width:100%; height:30px; margin: 0.25rem 0;">
+                <path d="M0 15 Q6 3 12 15 Q18 27 24 15 Q30 3 36 15 Q42 27 48 15 Q54 3 60 15 Q66 27 72 15 Q78 3 84 15 Q90 27 96 15 Q102 3 108 15 Q114 27 120 15 Q126 3 132 15 Q138 27 144 15 Q150 3 156 15 Q162 27 168 15 Q174 3 180 15 Q186 27 192 15 Q198 3 204 15 Q210 27 216 15 Q222 3 228 15 Q234 27 240 15 Q246 3 252 15 Q258 27 264 15 Q270 3 276 15 Q282 27 288 15 Q294 3 300 15 Q306 27 312 15 Q318 3 324 15 Q330 27 340 15"
+                  fill="none" stroke="#D4A55A" stroke-width="1" opacity="0.5"/>
+              </svg>
+
+              <div class="oled-label">Countdown</div>
+              <div class="countdown">
+                <div class="cd-item">
+                  <div class="cd-num">127</div>
+                  <div class="cd-unit">Days</div>
+                </div>
+                <div class="cd-item">
+                  <div class="cd-num">14</div>
+                  <div class="cd-unit">Hrs</div>
+                </div>
+                <div class="cd-item">
+                  <div class="cd-num">32</div>
+                  <div class="cd-unit">Min</div>
+                </div>
+                <div class="cd-item">
+                  <div class="cd-num">08</div>
+                  <div class="cd-unit">Sec</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Knobs -->
+            <div class="korg-section">
+              <div class="korg-section-label">Signal Path</div>
+              <div class="knob-row">
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Learn</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Build</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Solder</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Code</span></div>
+                <div class="knob-group"><div class="knob"></div><span class="knob-name">Ship</span></div>
+              </div>
+            </div>
+
+            <!-- Step sequencer -->
+            <div class="korg-section">
+              <div class="korg-section-label">Workshop Sequence</div>
+              <div class="steps">
+                <div class="step step-active"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step step-on"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+                <div class="step"><div class="step-dot"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="wood"></div>
+
+    <!-- LEARNING MODULES -->
+    <section class="section">
+      <div class="section-inner">
+        <div class="section-eyebrow"><span class="dot dot-teal"></span> Explore</div>
+        <h2 class="section-title">Get Started</h2>
+        <p class="section-desc">Learn the tools before the workshop. Self-paced modules — dive in whenever you're ready.</p>
+
+        <div class="panel">
+          <div class="panel-bar">
+            <span class="panel-bar-label"><span class="dot dot-teal"></span> Learning Modules</span>
+            <span class="panel-bar-meta">3 modules &middot; self-paced</span>
+          </div>
+          <div class="module-grid">
+            <div class="mod mod-active">
+              <div class="mod-eyebrow"><span class="dot dot-teal"></span> Module 01</div>
+              <h3>Claude Code</h3>
+              <p>Your AI pair programmer. How it reads schematics, writes firmware, and debugs circuits alongside you.</p>
+              <div class="mod-footer">
+                <a href="#" class="mod-link">Begin &rarr;</a>
+                <span class="mod-meta">5 lessons</span>
+              </div>
+              <div class="mod-progress">
+                <div class="mod-progress-track"><div class="mod-progress-fill" style="width:0%"></div></div>
+                <span class="mod-progress-label">Not started</span>
+              </div>
+            </div>
+            <div class="mod">
+              <div class="mod-eyebrow"><span class="dot dot-teal"></span> Module 02</div>
+              <h3>Arduino</h3>
+              <p>Microcontrollers, sensors, actuators. The open-source hardware platform and your building blocks.</p>
+              <div class="mod-footer">
+                <a href="#" class="mod-link">Begin &rarr;</a>
+                <span class="mod-meta">8 lessons</span>
+              </div>
+              <div class="mod-progress">
+                <div class="mod-progress-track"><div class="mod-progress-fill" style="width:0%"></div></div>
+                <span class="mod-progress-label">Not started</span>
+              </div>
+            </div>
+            <div class="mod">
+              <div class="mod-eyebrow"><span class="dot dot-copper"></span> Module 03</div>
+              <h3>Electronics</h3>
+              <p>Voltage, current, resistance. Reading schematics. Breadboard basics. The fundamentals you need.</p>
+              <div class="mod-footer">
+                <a href="#" class="mod-link">Begin &rarr;</a>
+                <span class="mod-meta">6 lessons</span>
+              </div>
+              <div class="mod-progress">
+                <div class="mod-progress-track"><div class="mod-progress-fill" style="width:0%"></div></div>
+                <span class="mod-progress-label">Not started</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section class="section section-alt">
+      <div class="section-inner">
+        <div class="section-eyebrow"><span class="dot dot-copper"></span> Build</div>
+        <h2 class="section-title">What You'll Build</h2>
+        <p class="section-desc">Each project is yours to take home. Real hardware, real skills, real builds.</p>
+
+        <div class="projects-grid">
+          <div class="proj">
+            <div class="proj-screen">
+              <div class="proj-screen-label">Project 01</div>
+              <div class="proj-screen-diff" style="color:var(--secondary)">Beginner</div>
+              <pre class="proj-ascii" style="color:var(--primary);">
+┌─────────────────┐
+│  ╔═══╗   TEMP   │
+│  ║ O ║   23.4°C │
+│  ╚═══╝   HUM    │
+│  [BME]   67.2%  │
+│  ════════════   │
+│  [SD] [OLED]    │
+└─────────────────┘
+              </pre>
+            </div>
+            <div class="proj-body">
+              <div class="proj-name">Weather Station</div>
+              <p class="proj-desc">Temperature, humidity, pressure → OLED display. Data logging to SD card. Battery powered portable unit.</p>
+              <div class="proj-tags">
+                <span class="proj-tag">Arduino Nano</span>
+                <span class="proj-tag">BME280</span>
+                <span class="proj-tag">SSD1306</span>
+                <span class="proj-tag">SD Card</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="proj">
+            <div class="proj-screen">
+              <div class="proj-screen-label">Project 02</div>
+              <div class="proj-screen-diff" style="color:var(--primary)">Intermediate</div>
+              <pre class="proj-ascii" style="color:var(--secondary);">
+┌─────────────────────┐
+│ ◉ FREQ  ◉ RES  ◉ V │
+│                     │
+│ [1] [2] [3] [4]    │
+│                     │
+│ ◉ ATK   ◉ REL  ◉ M │
+│         ┌─────┐    │
+│ [5] [6] │ USB │    │
+│         └─────┘    │
+└─────────────────────┘
+              </pre>
+            </div>
+            <div class="proj-body">
+              <div class="proj-name">MIDI Controller</div>
+              <p class="proj-desc">Custom knobs + buttons → USB-MIDI output. Design your layout. Plug into any DAW.</p>
+              <div class="proj-tags">
+                <span class="proj-tag">Arduino Leonardo</span>
+                <span class="proj-tag">Potentiometers</span>
+                <span class="proj-tag">USB-MIDI</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="proj">
+            <div class="proj-screen">
+              <div class="proj-screen-label">Project 03</div>
+              <div class="proj-screen-diff" style="color:var(--primary)">Intermediate</div>
+              <pre class="proj-ascii" style="color:var(--accent);">
+┌─────────────────────┐
+│ ░▒▓█▓▒░░▒▓█▓▒░░▒▓█ │
+│ ▓▒░░▒▓█▓▒░░▒▓█▓▒░░ │
+│ ░▒▓█▓▒░░▒▓█▓▒░░▒▓█ │
+│ ▓▒░░▒▓█▓▒░░▒▓█▓▒░░ │
+│                     │
+│  [MIC] ───→ [MCU]  │
+│         ┌────────┐  │
+│         │PATTERN │  │
+│         └────────┘  │
+└─────────────────────┘
+              </pre>
+            </div>
+            <div class="proj-body">
+              <div class="proj-name">LED Installation</div>
+              <p class="proj-desc">Addressable LED strip with custom patterns. Sound-reactive mode. 3D-printed enclosure included.</p>
+              <div class="proj-tags">
+                <span class="proj-tag">Arduino Uno</span>
+                <span class="proj-tag">WS2812B</span>
+                <span class="proj-tag">Microphone</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSHOP DETAILS -->
+    <section class="section">
+      <div class="section-inner">
+        <div class="section-eyebrow"><span class="dot dot-amber dot-pulse"></span> Details</div>
+        <h2 class="section-title">The Workshop</h2>
+        <p class="section-desc">Everything you need to know about what to expect.</p>
+
+        <div class="details-grid">
+          <div class="detail-card card-amber">
+            <div class="detail-label"><span class="dot dot-amber"></span> What You Get</div>
+            <div class="detail-title">Take It All Home</div>
+            <ul class="detail-list">
+              <li><span class="dot dot-amber"></span> All components and parts</li>
+              <li><span class="dot dot-amber"></span> Finished, working project</li>
+              <li><span class="dot dot-amber"></span> Laser-cut or 3D-printed enclosure</li>
+              <li><span class="dot dot-amber"></span> Reference card with schematics</li>
+              <li><span class="dot dot-amber"></span> Access to online learning modules</li>
+            </ul>
+          </div>
+          <div class="detail-card card-teal">
+            <div class="detail-label"><span class="dot dot-teal"></span> What to Expect</div>
+            <div class="detail-title">Workshop Flow</div>
+            <ul class="detail-list">
+              <li><span class="dot dot-teal"></span> Intro + safety briefing (15 min)</li>
+              <li><span class="dot dot-teal"></span> Choose your project</li>
+              <li><span class="dot dot-teal"></span> Guided build with Claude Code (2.5 hrs)</li>
+              <li><span class="dot dot-teal"></span> Break &mdash; refreshments provided</li>
+              <li><span class="dot dot-teal"></span> Customize + troubleshoot (1 hr)</li>
+              <li><span class="dot dot-teal"></span> Show & tell + pack up</li>
+            </ul>
+          </div>
+          <div class="detail-card card-copper">
+            <div class="detail-label"><span class="dot dot-copper"></span> Prerequisites</div>
+            <div class="detail-title">Who It's For</div>
+            <div class="detail-text">
+              No hardware experience needed. If you can follow a recipe, you can solder a circuit. Claude Code walks you through every step &mdash; from first wire to working firmware.
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-label"><span class="dot dot-off"></span> Location</div>
+            <div class="detail-title">Long Beach, CA</div>
+            <div class="detail-text">
+              Exact venue announced when registration opens. Downtown Long Beach, walking distance from transit. All tools and workstations provided.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUOTE -->
+    <div class="wood"></div>
+    <section class="quote-section">
+      <div class="quote-section-inner">
+        <p class="quote-text">"The best way to understand technology is to build it with your hands."</p>
+        <p class="quote-attr">The Fabricated Philosophy</p>
+      </div>
+    </section>
+    <div class="wood"></div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand-logo">FABRICATED</div>
+          <p class="footer-brand-text">Hardware build series bridging AI coding with physical making. Summer 2026, Long Beach, CA.</p>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Learn</div>
+          <a href="#">Claude Code</a>
+          <a href="#">Arduino</a>
+          <a href="#">Electronics 101</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Build</div>
+          <a href="#">Weather Station</a>
+          <a href="#">MIDI Controller</a>
+          <a href="#">LED Installation</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Connect</div>
+          <a href="#">GitHub</a>
+          <a href="#">Discord</a>
+          <a href="#">Email Us</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Fabricated</span>
+        <span>Built with Claude Code</span>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

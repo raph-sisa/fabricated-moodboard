@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Visual Moodboard v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0D0D0D;
+    color: #E8E4DC;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 3rem;
+    line-height: 1.6;
+  }
+
+  h1 {
+    font-family: 'VT323', monospace;
+    font-size: 2.5rem;
+    color: #D4A55A;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.05em;
+  }
+
+  .subtitle {
+    font-size: 0.7rem;
+    color: #8F837A;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+  }
+
+  /* === SECTION HEADERS === */
+  .section-header {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8F837A;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #2A2A27;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-header .led {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #D4A55A;
+    box-shadow: 0 0 4px #D4A55A;
+  }
+
+  .section { margin-bottom: 4rem; }
+
+  /* === COLOR PALETTE === */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .swatch-name {
+    font-size: 0.6rem;
+    font-weight: 500;
+    margin-bottom: 0.15rem;
+  }
+
+  .swatch-hex {
+    font-size: 0.55rem;
+    opacity: 0.7;
+  }
+
+  .swatch-dark .swatch-name,
+  .swatch-dark .swatch-hex {
+    color: #E8E4DC;
+  }
+
+  .swatch-light .swatch-name,
+  .swatch-light .swatch-hex {
+    color: #0D0D0D;
+  }
+
+  /* === TYPOGRAPHY SPECIMENS === */
+  .type-specimens {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .type-specimen {
+    background: #1A1A18;
+    border: 1px solid #2A2A27;
+    border-radius: 4px;
+    padding: 2rem;
+  }
+
+  .type-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #8F837A;
+    margin-bottom: 1rem;
+  }
+
+  .type-sample-vt323 {
+    font-family: 'VT323', monospace;
+    font-size: 3rem;
+    color: #E8E4DC;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+
+  .type-sample-ibm {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.1rem;
+    color: #E8E4DC;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+  }
+
+  .type-sample-ibm-small {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: #8F837A;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+  }
+
+  .type-sample-inter {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    color: #E8E4DC;
+    line-height: 1.7;
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+  }
+
+  .type-sample-dm {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.8rem;
+    color: #E8E4DC;
+    line-height: 1.3;
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+  }
+
+  .type-meta {
+    font-size: 0.55rem;
+    color: #5A5650;
+    margin-top: 0.75rem;
+  }
+
+  /* === MOOD IMAGERY GRID === */
+  .mood-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 200px 200px;
+    gap: 1rem;
+  }
+
+  .mood-tile {
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #2A2A27;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mood-tile-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    font-size: 0.55rem;
+    color: #8F837A;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Simulated mood imagery with CSS */
+  .mood-korg-panel {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a28 40%, #1a1a1a 100%);
+    grid-row: span 2;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    align-items: flex-start;
+  }
+
+  .knob-row {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .knob {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4a4a48, #1a1a18);
+    border: 2px solid #3a3a38;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    position: relative;
+  }
+
+  .knob::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 10px;
+    background: #E8E4DC;
+    border-radius: 1px;
+  }
+
+  .knob-label {
+    font-size: 0.5rem;
+    color: #5A5650;
+    text-align: center;
+    margin-top: 0.25rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .knob-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .panel-section-label {
+    font-size: 0.5rem;
+    color: #8F837A;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #2A2A27;
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+
+  .mood-japandi {
+    background: linear-gradient(145deg, #2D2A25 0%, #1A1917 100%);
+  }
+
+  .mood-japandi-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+  }
+
+  .japandi-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 1px solid #3a3632;
+  }
+
+  .japandi-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    color: #8F837A;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .mood-pcb {
+    background: #0a1a0a;
+    overflow: hidden;
+  }
+
+  .pcb-pattern {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Simulated PCB traces */
+  .pcb-trace {
+    position: absolute;
+    background: #B87333;
+    opacity: 0.4;
+  }
+
+  .pcb-trace-h {
+    height: 2px;
+    border-radius: 1px;
+  }
+
+  .pcb-trace-v {
+    width: 2px;
+    border-radius: 1px;
+  }
+
+  .pcb-pad {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #B87333;
+    opacity: 0.6;
+    border: 1px solid #D4A55A;
+  }
+
+  .mood-wood {
+    background: linear-gradient(90deg,
+      #2D2518 0%, #332B1E 10%, #2D2518 20%, #3A3025 30%,
+      #2D2518 40%, #352D20 50%, #2D2518 60%, #332B1E 70%,
+      #2D2518 80%, #3A3025 90%, #2D2518 100%
+    );
+  }
+
+  .mood-oled {
+    background: #000;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+  }
+
+  .oled-waveform {
+    width: 100%;
+    height: 50px;
+  }
+
+  .oled-text {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: #D4A55A;
+    text-shadow: 0 0 8px rgba(212,165,90,0.5);
+    text-align: center;
+  }
+
+  /* === PATTERN EXAMPLES === */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .pattern-example {
+    background: #1A1A18;
+    border: 1px solid #2A2A27;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .pattern-preview {
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .pattern-name {
+    font-size: 0.6rem;
+    color: #8F837A;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid #2A2A27;
+  }
+
+  /* LED indicators pattern */
+  .led-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .led-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .led-amber {
+    background: #D4A55A;
+    box-shadow: 0 0 6px #D4A55A, 0 0 12px rgba(212,165,90,0.3);
+  }
+
+  .led-teal {
+    background: #5A8A8A;
+    box-shadow: 0 0 6px #5A8A8A, 0 0 12px rgba(90,138,138,0.3);
+  }
+
+  .led-copper {
+    background: #B87333;
+    box-shadow: 0 0 6px #B87333, 0 0 12px rgba(184,115,51,0.3);
+  }
+
+  .led-off {
+    background: #2A2A27;
+    box-shadow: none;
+  }
+
+  .led-label-text {
+    font-size: 0.6rem;
+    color: #8F837A;
+  }
+
+  /* Module border pattern */
+  .mini-module {
+    border: 1px solid #2A2A27;
+    border-radius: 3px;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .mini-module-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #5A5650;
+    margin-bottom: 0.5rem;
+  }
+
+  .mini-module-title {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: #E8E4DC;
+  }
+
+  /* OLED panel pattern */
+  .mini-oled {
+    background: #000;
+    border: 1px solid #1a1a18;
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+  }
+
+  .mini-oled-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #5A5650;
+    margin-bottom: 0.25rem;
+  }
+
+  .mini-oled-value {
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    color: #D4A55A;
+    text-shadow: 0 0 6px rgba(212,165,90,0.4);
+  }
+
+  /* === MOOD KEYWORDS === */
+  .keywords {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .keyword {
+    padding: 0.5rem 1.25rem;
+    border: 1px solid #2A2A27;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #8F837A;
+  }
+
+  .keyword-primary {
+    border-color: rgba(212,165,90,0.3);
+    color: #D4A55A;
+  }
+
+  /* === AVOID SECTION === */
+  .avoid-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .avoid-item {
+    background: #1A1A18;
+    border: 1px solid #2A2A27;
+    border-radius: 4px;
+    padding: 1.25rem;
+    position: relative;
+  }
+
+  .avoid-item::before {
+    content: '✕';
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    color: #CD4444;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+
+  .avoid-item-title {
+    font-size: 0.65rem;
+    color: #E8E4DC;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .avoid-item-desc {
+    font-size: 0.6rem;
+    color: #5A5650;
+    line-height: 1.5;
+  }
+
+  /* Neon example to avoid */
+  .avoid-neon {
+    background: #050508;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 3px;
+  }
+
+  .avoid-neon-text {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: #00FF41;
+    text-shadow: 0 0 10px #00FF41, 0 0 20px rgba(0,255,65,0.3);
+  }
+
+  .avoid-cyan-text {
+    color: #00AAFF;
+    text-shadow: 0 0 10px #00AAFF, 0 0 20px rgba(0,170,255,0.3);
+  }
+</style>
+</head>
+<body>
+
+  <h1>FABRICATED</h1>
+  <p class="subtitle">Visual Moodboard v1 — Craft Terminal</p>
+
+  <!-- COLOR PALETTE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="led"></span>
+      Color Palette
+    </div>
+    <div class="palette-grid">
+      <div class="swatch swatch-dark" style="background: #D4A55A;">
+        <span class="swatch-name" style="color:#0D0D0D">Primary</span>
+        <span class="swatch-hex" style="color:#0D0D0D">Warm Amber #D4A55A</span>
+      </div>
+      <div class="swatch swatch-dark" style="background: #5A8A8A;">
+        <span class="swatch-name" style="color:#E8E4DC">Secondary</span>
+        <span class="swatch-hex" style="color:#E8E4DC">Muted Teal #5A8A8A</span>
+      </div>
+      <div class="swatch swatch-dark" style="background: #B87333;">
+        <span class="swatch-name" style="color:#0D0D0D">Accent</span>
+        <span class="swatch-hex" style="color:#0D0D0D">Aged Copper #B87333</span>
+      </div>
+      <div class="swatch swatch-dark" style="background: #0D0D0D; border-color: #2A2A27;">
+        <span class="swatch-name">Background</span>
+        <span class="swatch-hex">Near Black #0D0D0D</span>
+      </div>
+      <div class="swatch swatch-dark" style="background: #1A1A18; border-color: #2A2A27;">
+        <span class="swatch-name">Surface</span>
+        <span class="swatch-hex">Dark Warm #1A1A18</span>
+      </div>
+      <div class="swatch swatch-dark" style="background: #E8E4DC;">
+        <span class="swatch-name" style="color:#0D0D0D">Text</span>
+        <span class="swatch-hex" style="color:#0D0D0D">Warm White #E8E4DC</span>
+      </div>
+      <div class="swatch swatch-dark" style="background: #8F837A;">
+        <span class="swatch-name" style="color:#0D0D0D">Muted</span>
+        <span class="swatch-hex" style="color:#0D0D0D">Gray Brown #8F837A</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div class="section">
+    <div class="section-header">
+      <span class="led"></span>
+      Typography
+    </div>
+    <div class="type-specimens">
+      <div class="type-specimen">
+        <div class="type-label">Headlines — VT323</div>
+        <div class="type-sample-vt323">Build Real<br>Hardware.</div>
+        <div class="type-meta">Retro terminal display. Used for hero text, section headers, OLED values. Bridges the terminal aesthetic with hardware panel labeling.</div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-label">Body — IBM Plex Mono</div>
+        <div class="type-sample-ibm">Solder, wire, program,<br>take it home.</div>
+        <div class="type-sample-ibm-small">A hands-on workshop in Long Beach where you'll build hardware projects guided by Claude Code. The open-source hardware platform meets AI pair programming.</div>
+        <div class="type-meta">Technical, precise. Like Korg panel text — clean and functional on dark surfaces. Primary reading font across the site.</div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-label">Learning Content — DM Sans (Light)</div>
+        <div class="type-sample-dm">Introduction to Arduino</div>
+        <div class="type-sample-inter">Arduino is an open-source electronics platform based on easy-to-use hardware and software. It's intended for anyone making interactive projects — artists, designers, hobbyists, and anyone interested in creating interactive objects.</div>
+        <div class="type-meta">Japandi influence. Lighter weight, more readable for longer tutorial content. Humanist warmth for the learning modules.</div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-label">Labels / Metadata — IBM Plex Mono (Caps)</div>
+        <div class="type-sample-ibm-small" style="letter-spacing:0.25em; text-transform:uppercase;">OSCILLATOR &nbsp; FILTER &nbsp; AMPLIFIER &nbsp; LFO</div>
+        <div style="margin-top:1rem"></div>
+        <div class="type-sample-ibm-small" style="letter-spacing:0.2em; text-transform:uppercase;">Learn &nbsp;&middot;&nbsp; Build &nbsp;&middot;&nbsp; Workshop Details</div>
+        <div class="type-meta">Synth panel labeling convention. Small, uppercase, generous letter-spacing. Used for section headers, nav items, metadata.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOOD / MATERIAL REFERENCES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="led"></span>
+      Mood &amp; Materials
+    </div>
+    <div class="mood-grid">
+      <!-- Korg panel simulation -->
+      <div class="mood-tile mood-korg-panel">
+        <div class="panel-section-label">VCO — Oscillator</div>
+        <div class="knob-row">
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Freq</span>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Shape</span>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Level</span>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Mod</span>
+          </div>
+        </div>
+        <div class="panel-section-label">VCF — Filter</div>
+        <div class="knob-row">
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Cutoff</span>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Res</span>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Env</span>
+          </div>
+          <div class="knob-group">
+            <div class="knob"></div>
+            <span class="knob-label">Key</span>
+          </div>
+        </div>
+        <div class="mood-tile-label">Korg panel: brushed metal, labeled sections, signal-flow layout</div>
+      </div>
+
+      <!-- Japandi / Ma -->
+      <div class="mood-tile mood-japandi">
+        <div class="mood-japandi-content">
+          <div class="japandi-circle" style="background: #2D2A25; border-color: #4a4540;"></div>
+          <div class="japandi-circle" style="background: #3A3530; border-color: #5a5550; width:40px; height:40px;"></div>
+          <span class="japandi-text">Ma — Space</span>
+        </div>
+        <div class="mood-tile-label">Japandi: negative space as design element</div>
+      </div>
+
+      <!-- PCB traces -->
+      <div class="mood-tile mood-pcb">
+        <div class="pcb-pattern">
+          <div class="pcb-trace pcb-trace-h" style="top:20%; left:10%; width:60%;"></div>
+          <div class="pcb-trace pcb-trace-v" style="top:20%; left:70%; height:40%;"></div>
+          <div class="pcb-trace pcb-trace-h" style="top:60%; left:30%; width:40%;"></div>
+          <div class="pcb-trace pcb-trace-v" style="top:40%; left:30%; height:20%;"></div>
+          <div class="pcb-trace pcb-trace-h" style="top:40%; left:30%; width:20%;"></div>
+          <div class="pcb-trace pcb-trace-v" style="top:40%; left:50%; height:35%;"></div>
+          <div class="pcb-trace pcb-trace-h" style="top:75%; left:50%; width:30%;"></div>
+          <div class="pcb-pad" style="top:calc(20% - 4px); left:calc(10% - 4px);"></div>
+          <div class="pcb-pad" style="top:calc(60% - 4px); left:calc(70% - 4px);"></div>
+          <div class="pcb-pad" style="top:calc(75% - 4px); left:calc(80% - 4px);"></div>
+          <div class="pcb-pad" style="top:calc(40% - 4px); left:calc(30% - 4px);"></div>
+          <div class="pcb-pad" style="top:calc(20% - 4px); left:calc(70% - 4px);"></div>
+        </div>
+        <div class="mood-tile-label">PCB traces: copper routing as decorative element</div>
+      </div>
+
+      <!-- Wood texture -->
+      <div class="mood-tile mood-wood">
+        <div class="mood-tile-label">Wood: Korg oak side panels, Japandi warmth</div>
+      </div>
+
+      <!-- OLED display -->
+      <div class="mood-tile mood-oled">
+        <svg class="oled-waveform" viewBox="0 0 200 50">
+          <path d="M0 25 Q10 10 20 25 Q30 40 40 25 Q50 10 60 25 Q70 40 80 25 Q90 10 100 25 Q110 40 120 25 Q130 10 140 25 Q150 40 160 25 Q170 10 180 25 Q190 40 200 25"
+            fill="none" stroke="#D4A55A" stroke-width="1.5" opacity="0.8"/>
+          <path d="M0 25 Q10 15 20 25 Q30 35 40 25 Q50 15 60 25 Q70 35 80 25 Q90 15 100 25 Q110 35 120 25 Q130 15 140 25 Q150 35 160 25 Q170 15 180 25 Q190 35 200 25"
+            fill="none" stroke="#5A8A8A" stroke-width="1" opacity="0.4"/>
+        </svg>
+        <div class="oled-text">PATCH 01 — SAW</div>
+        <div class="mood-tile-label">OLED: amber glow on pure black, Korg waveform display</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UI PATTERNS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="led"></span>
+      UI Patterns
+    </div>
+    <div class="pattern-grid">
+      <div class="pattern-example">
+        <div class="pattern-preview">
+          <div class="led-row">
+            <span class="led-indicator led-amber"></span>
+            <span class="led-label-text">Active — Registering</span>
+          </div>
+          <div class="led-row">
+            <span class="led-indicator led-teal"></span>
+            <span class="led-label-text">Connected — Online</span>
+          </div>
+          <div class="led-row">
+            <span class="led-indicator led-copper"></span>
+            <span class="led-label-text">Building — In Progress</span>
+          </div>
+          <div class="led-row">
+            <span class="led-indicator led-off"></span>
+            <span class="led-label-text">Upcoming — Not Yet</span>
+          </div>
+        </div>
+        <div class="pattern-name">LED Status Indicators</div>
+      </div>
+
+      <div class="pattern-example">
+        <div class="pattern-preview">
+          <div class="mini-module">
+            <div class="mini-module-label">Learn</div>
+            <div class="mini-module-title">Claude Code</div>
+          </div>
+          <div class="mini-module" style="margin-top:0.5rem">
+            <div class="mini-module-label">Build</div>
+            <div class="mini-module-title">MIDI Controller</div>
+          </div>
+        </div>
+        <div class="pattern-name">Synth Module Cards</div>
+      </div>
+
+      <div class="pattern-example">
+        <div class="pattern-preview" style="gap:0.5rem">
+          <div class="mini-oled">
+            <div class="mini-oled-label">Location</div>
+            <div class="mini-oled-value">Long Beach, CA</div>
+          </div>
+          <div class="mini-oled">
+            <div class="mini-oled-label">Countdown</div>
+            <div class="mini-oled-value">127 Days</div>
+          </div>
+        </div>
+        <div class="pattern-name">OLED Data Panels</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOOD KEYWORDS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="led"></span>
+      Mood Keywords
+    </div>
+    <div class="keywords">
+      <span class="keyword keyword-primary">Warm Precision</span>
+      <span class="keyword keyword-primary">Organized Transparency</span>
+      <span class="keyword keyword-primary">New Vintage</span>
+      <span class="keyword keyword-primary">Craft Tech</span>
+      <span class="keyword keyword-primary">Quiet Power</span>
+      <span class="keyword">Korg Minilogue</span>
+      <span class="keyword">Japanese Workshop</span>
+      <span class="keyword">Solder Glow</span>
+      <span class="keyword">Brushed Metal</span>
+      <span class="keyword">Wabi-Sabi</span>
+      <span class="keyword">Oak &amp; Copper</span>
+      <span class="keyword">Signal Flow</span>
+    </div>
+  </div>
+
+  <!-- WHAT TO AVOID -->
+  <div class="section">
+    <div class="section-header">
+      <span class="led"></span>
+      What to Avoid
+    </div>
+    <div class="avoid-grid">
+      <div class="avoid-item">
+        <div class="avoid-neon">
+          <span class="avoid-neon-text">HACK THE PLANET</span>
+        </div>
+        <div class="avoid-item-title">Cold Neon Green</div>
+        <div class="avoid-item-desc">Matrix/hacker aesthetic. Too cold, too aggressive for a craft workshop.</div>
+      </div>
+      <div class="avoid-item">
+        <div class="avoid-neon">
+          <span class="avoid-neon-text avoid-cyan-text">&#9608;&#9608; LOADING &#9608;&#9608;</span>
+        </div>
+        <div class="avoid-item-title">Cyberpunk Cyan</div>
+        <div class="avoid-item-desc">Current site leans here. Replace with warmer teal.</div>
+      </div>
+      <div class="avoid-item">
+        <div class="avoid-neon" style="background:#fff; border: 1px solid #eee;">
+          <span style="font-family:Inter; color:#111; font-size:0.8rem; font-weight:500;">Deploy your app &rarr;</span>
+        </div>
+        <div class="avoid-item-title">Corporate Dark Mode</div>
+        <div class="avoid-item-desc">The Vercel/Linear look. Too polished, no soul for a maker event.</div>
+      </div>
+      <div class="avoid-item">
+        <div class="avoid-neon" style="overflow:hidden;">
+          <span style="font-family:VT323; color:#FFB000; font-size:0.7rem; white-space:nowrap; animation: none;">TAKE IT HOME ★ LONG BEACH MAKERS ★ BUILD</span>
+        </div>
+        <div class="avoid-item-title">Scrolling Tickers</div>
+        <div class="avoid-item-desc">Visual noise. Breaks Japandi calm. Information overload.</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

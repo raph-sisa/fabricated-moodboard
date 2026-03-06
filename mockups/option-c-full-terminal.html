@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Option C: Full Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #D4A55A;
+    --secondary: #5A8A8A;
+    --accent: #B87333;
+    --bg: #0A0A08;
+    --surface: #111110;
+    --text-primary: #E8E4DC;
+    --text-secondary: #8F837A;
+    --text-dim: #5A5650;
+    --border: #1E1E1C;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* === TERMINAL CHROME === */
+  .terminal-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 860px;
+    margin: 2rem auto;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.5);
+  }
+
+  .terminal-titlebar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .dot-red { background: #FF5F57; }
+  .dot-yellow { background: #FFBD2E; }
+  .dot-green { background: #28C840; }
+
+  .terminal-title {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em;
+  }
+
+  .terminal-tab {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+  }
+
+  /* === TERMINAL BODY === */
+  .terminal-body {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    line-height: 1.8;
+    font-size: 0.8rem;
+  }
+
+  .line {
+    margin-bottom: 0.15rem;
+    white-space: pre-wrap;
+  }
+
+  .prompt {
+    color: var(--secondary);
+  }
+
+  .cmd {
+    color: var(--text-primary);
+  }
+
+  .output {
+    color: var(--text-secondary);
+  }
+
+  .highlight {
+    color: var(--primary);
+  }
+
+  .accent-copper {
+    color: var(--accent);
+  }
+
+  .accent-teal {
+    color: var(--secondary);
+  }
+
+  .dim {
+    color: var(--text-dim);
+  }
+
+  .bold {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .link {
+    color: var(--secondary);
+    text-decoration: underline;
+    text-decoration-color: rgba(90,138,138,0.3);
+    cursor: pointer;
+  }
+
+  /* ASCII art styling */
+  .ascii-art {
+    color: var(--primary);
+    line-height: 1.15;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin: 0.5rem 0;
+  }
+
+  /* Table styling */
+  .table-row {
+    display: flex;
+    gap: 0;
+  }
+
+  .table-cell {
+    min-width: 0;
+  }
+
+  .table-cell-label {
+    width: 140px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .table-cell-value {
+    color: var(--text-primary);
+  }
+
+  /* Separator */
+  .separator {
+    color: var(--text-dim);
+    margin: 0.5rem 0;
+  }
+
+  /* Help table */
+  .help-cmd {
+    color: var(--primary);
+    display: inline-block;
+    width: 180px;
+  }
+
+  .help-desc {
+    color: var(--text-secondary);
+  }
+
+  /* Blinking cursor */
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--primary);
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Status bar at bottom */
+  .status-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 0.35rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+  }
+
+  .status-led {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 4px var(--primary);
+    display: inline-block;
+    margin-right: 0.4rem;
+    animation: led-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes led-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Annotations */
+  .mockup-annotation {
+    position: fixed;
+    right: 1.5rem;
+    background: rgba(184,115,51,0.1);
+    border: 1px solid rgba(184,115,51,0.3);
+    border-radius: 3px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    z-index: 200;
+    max-width: 200px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .annotation-1 { top: 8%; }
+  .annotation-2 { top: 28%; }
+  .annotation-3 { top: 55%; }
+  .annotation-4 { top: 82%; }
+</style>
+</head>
+<body>
+  <!-- Annotations -->
+  <div class="mockup-annotation annotation-1">
+    The entire site is a terminal. Window chrome gives it context.
+  </div>
+  <div class="mockup-annotation annotation-2">
+    ASCII art banner as the hero. Warm amber, not green-on-black.
+  </div>
+  <div class="mockup-annotation annotation-3">
+    Content renders as stdout — type commands to navigate between pages.
+  </div>
+  <div class="mockup-annotation annotation-4">
+    "help" is the sitemap. Theme switching via commands.
+  </div>
+
+  <div class="terminal-window">
+    <div class="terminal-titlebar">
+      <div class="terminal-dots">
+        <div class="terminal-dot dot-red"></div>
+        <div class="terminal-dot dot-yellow"></div>
+        <div class="terminal-dot dot-green"></div>
+      </div>
+      <span class="terminal-title">fabricated — bash — 86x42</span>
+      <span class="terminal-tab">&#9662; amber</span>
+    </div>
+
+    <div class="terminal-body">
+      <!-- Welcome / ASCII banner -->
+      <div class="line"><span class="dim">Last login: Thu Mar 5 09:42:01 on ttys001</span></div>
+      <div class="line">&nbsp;</div>
+
+      <pre class="ascii-art">
+  ╔═╗╔═╗╔╗ ╦═╗╦╔═╗╔═╗╔╦╗╔═╗╔╦╗
+  ║╣ ╠═╣╠╩╗╠╦╝║║  ╠═╣ ║ ║╣  ║║
+  ╚  ╩ ╩╚═╝╩╚═╩╚═╝╩ ╩ ╩ ╚═╝═╩╝
+      </pre>
+
+      <div class="line"><span class="output">  Hardware Build Series — Long Beach, CA — Summer 2026</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line separator">  ─────────────────────────────────────────────────────</div>
+      <div class="line">&nbsp;</div>
+
+      <!-- About command -->
+      <div class="line"><span class="prompt">fabricated ~ </span><span class="cmd">about</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="bold">  A hands-on workshop where you build real hardware</span></div>
+      <div class="line"><span class="bold">  projects guided by Claude Code.</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line table-row">
+        <span class="table-cell table-cell-label">  Location</span>
+        <span class="table-cell table-cell-value">Long Beach, CA</span>
+      </div>
+      <div class="line table-row">
+        <span class="table-cell table-cell-label">  When</span>
+        <span class="table-cell table-cell-value">Summer 2026</span>
+      </div>
+      <div class="line table-row">
+        <span class="table-cell table-cell-label">  Status</span>
+        <span class="table-cell table-cell-value"><span class="highlight">&#9679; Registering</span></span>
+      </div>
+      <div class="line table-row">
+        <span class="table-cell table-cell-label">  What you do</span>
+        <span class="table-cell table-cell-value">Solder, wire, program, take it home</span>
+      </div>
+      <div class="line">&nbsp;</div>
+
+      <!-- Signup command -->
+      <div class="line"><span class="prompt">fabricated ~ </span><span class="cmd">signup</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="output">  Enter your email to get notified when registration opens.</span></div>
+      <div class="line"><span class="output">  </span><span class="accent-teal">Email:</span> <span class="cmd">maker@example.com</span></div>
+      <div class="line"><span class="output">  </span><span class="highlight">&#10003; You're on the list. We'll be in touch.</span></div>
+      <div class="line">&nbsp;</div>
+
+      <!-- Help command -->
+      <div class="line"><span class="prompt">fabricated ~ </span><span class="cmd">help</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="output">  Available commands:</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line">  <span class="help-cmd">about</span><span class="help-desc">Event details and overview</span></div>
+      <div class="line">  <span class="help-cmd">learn claude-code</span><span class="help-desc">What is Claude Code + tutorials</span></div>
+      <div class="line">  <span class="help-cmd">learn arduino</span><span class="help-desc">Introduction to Arduino</span></div>
+      <div class="line">  <span class="help-cmd">projects</span><span class="help-desc">Browse workshop projects</span></div>
+      <div class="line">  <span class="help-cmd">projects midi-ctrl</span><span class="help-desc">View a specific project</span></div>
+      <div class="line">  <span class="help-cmd">signup</span><span class="help-desc">Register for updates</span></div>
+      <div class="line">  <span class="help-cmd">theme [name]</span><span class="help-desc">Switch theme (amber, teal, copper)</span></div>
+      <div class="line">  <span class="help-cmd">clear</span><span class="help-desc">Clear terminal</span></div>
+      <div class="line">&nbsp;</div>
+
+      <!-- Projects peek -->
+      <div class="line"><span class="prompt">fabricated ~ </span><span class="cmd">projects --list</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="output">  Workshop projects (3 available):</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line">  <span class="highlight">01</span>  <span class="bold">Weather Station</span>        <span class="dim">temperature, humidity, OLED display</span></div>
+      <div class="line">  <span class="highlight">02</span>  <span class="bold">MIDI Controller</span>        <span class="dim">knobs, buttons, USB-MIDI output</span></div>
+      <div class="line">  <span class="highlight">03</span>  <span class="bold">LED Installation</span>       <span class="dim">addressable LEDs, patterns, sound-reactive</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="output">  Type </span><span class="accent-teal">projects &lt;name&gt;</span><span class="output"> for details.</span></div>
+      <div class="line">&nbsp;</div>
+
+      <!-- Waiting prompt -->
+      <div class="line"><span class="prompt">fabricated ~ </span><span class="cursor"></span></div>
+    </div>
+
+    <div class="status-bar">
+      <span><span class="status-led"></span>connected — fabricated v1.0</span>
+      <span>theme: amber | type "help" for commands</span>
+    </div>
+  </div>
+</body>
+</html>

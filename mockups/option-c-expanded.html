@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Option C Expanded: Full Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #D4A55A;
+    --primary-dim: rgba(212,165,90,0.15);
+    --secondary: #5A8A8A;
+    --accent: #B87333;
+    --bg: #080806;
+    --surface: #111110;
+    --text-primary: #E8E4DC;
+    --text-secondary: #8F837A;
+    --text-dim: #5A5650;
+    --border: #1E1E1C;
+    --error: #CD6464;
+    --success: #6ACD6A;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  /* === TERMINAL WINDOW === */
+  .terminal {
+    width: 100%;
+    max-width: 920px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 25px 80px rgba(0,0,0,0.6),
+      0 0 1px rgba(212,165,90,0.1);
+  }
+
+  /* Title bar */
+  .titlebar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.65rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    -webkit-app-region: drag;
+  }
+
+  .titlebar-dots {
+    display: flex;
+    gap: 7px;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .dot-red { background: #FF5F57; }
+  .dot-yellow { background: #FFBD2E; }
+  .dot-green { background: #28C840; }
+
+  .titlebar-title {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  .titlebar-tabs {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .titlebar-tab {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .titlebar-tab.active {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+  }
+
+  /* Tab bar */
+  .tabbar {
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border);
+    padding: 0 0.75rem;
+    display: flex;
+    align-items: stretch;
+    height: 32px;
+  }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 1rem;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text-secondary); }
+
+  .tab.active {
+    color: var(--text-primary);
+    background: var(--bg);
+    border-bottom: 1px solid var(--primary);
+    margin-bottom: -1px;
+  }
+
+  .tab-led {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+  }
+
+  .tab-led-amber {
+    background: var(--primary);
+    box-shadow: 0 0 3px var(--primary);
+  }
+
+  .tab-led-teal {
+    background: var(--secondary);
+    box-shadow: 0 0 3px var(--secondary);
+  }
+
+  .tab-led-dim {
+    background: var(--text-dim);
+  }
+
+  /* Terminal body */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.78rem;
+    line-height: 1.75;
+  }
+
+  /* Each "screen" is a section of terminal output */
+  .screen {
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .screen:last-child {
+    border-bottom: none;
+  }
+
+  .screen-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ln { margin-bottom: 0.1rem; white-space: pre-wrap; }
+  .blank { height: 0.6rem; }
+
+  .prompt { color: var(--secondary); }
+  .cmd { color: var(--text-primary); font-weight: 500; }
+  .out { color: var(--text-secondary); }
+  .hi { color: var(--primary); }
+  .teal { color: var(--secondary); }
+  .copper { color: var(--accent); }
+  .dim { color: var(--text-dim); }
+  .err { color: var(--error); }
+  .ok { color: var(--success); }
+  .bold { font-weight: 600; color: var(--text-primary); }
+  .ul { text-decoration: underline; text-decoration-color: rgba(90,138,138,0.3); }
+
+  /* ASCII art */
+  .ascii {
+    font-size: 0.65rem;
+    line-height: 1.1;
+    color: var(--primary);
+    opacity: 0.85;
+  }
+
+  .ascii-small {
+    font-size: 0.6rem;
+    line-height: 1.15;
+    color: var(--secondary);
+    opacity: 0.7;
+  }
+
+  /* Tables */
+  .tbl {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .tbl-row {
+    display: flex;
+  }
+
+  .tbl-key {
+    width: 160px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .tbl-val {
+    color: var(--text-primary);
+  }
+
+  /* Boxes / bordered content */
+  .box {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+    background: rgba(255,255,255,0.01);
+  }
+
+  .box-header {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.3rem 0;
+  }
+
+  .progress-track {
+    width: 200px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .progress-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    width: 120px;
+  }
+
+  .progress-pct {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+  }
+
+  /* Interactive cards in terminal */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+  }
+
+  .term-card {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1rem;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+
+  .term-card:hover {
+    border-color: rgba(212,165,90,0.3);
+  }
+
+  .term-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .term-card-title {
+    font-weight: 500;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+  }
+
+  .term-card-tag {
+    font-size: 0.5rem;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+  }
+
+  .term-card-desc {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* Blinking cursor */
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: var(--primary);
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Status bar */
+  .statusbar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 0.35rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.55rem;
+    color: var(--text-dim);
+  }
+
+  .statusbar-left, .statusbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .status-led {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: led-pulse 2.5s ease-in-out infinite;
+  }
+
+  .status-led-amber {
+    background: var(--primary);
+    box-shadow: 0 0 3px var(--primary);
+  }
+
+  .status-led-teal {
+    background: var(--secondary);
+    box-shadow: 0 0 3px var(--secondary);
+  }
+
+  @keyframes led-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* Separator between outputs */
+  .sep {
+    color: var(--text-dim);
+    opacity: 0.3;
+  }
+
+  /* Theme preview swatches */
+  .theme-swatches {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+  }
+
+  .theme-swatch {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .theme-swatch.active {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+  }
+
+  .theme-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .theme-name {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+
+  <div class="terminal">
+    <!-- === TITLE BAR === -->
+    <div class="titlebar">
+      <div class="titlebar-dots">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+      </div>
+      <span class="titlebar-title">fabricated — zsh — 102x58</span>
+      <div class="titlebar-tabs">
+        <span class="titlebar-tab active">&#9679; amber</span>
+      </div>
+    </div>
+
+    <!-- === TAB BAR (open sessions) === -->
+    <div class="tabbar">
+      <div class="tab active">
+        <span class="tab-led tab-led-amber"></span>
+        home
+      </div>
+      <div class="tab">
+        <span class="tab-led tab-led-teal"></span>
+        learn arduino
+      </div>
+      <div class="tab">
+        <span class="tab-led tab-led-dim"></span>
+        projects
+      </div>
+    </div>
+
+    <!-- === TERMINAL BODY === -->
+    <div class="body">
+
+      <!-- SCREEN 1: Welcome -->
+      <div class="screen">
+        <div class="screen-label">Welcome</div>
+
+        <div class="ln"><span class="dim">Last login: Thu Mar  5 09:42:01 on ttys001</span></div>
+        <div class="blank"></div>
+
+        <pre class="ascii">
+  ███████╗ █████╗ ██████╗ ██████╗ ██╗ ██████╗ █████╗ ████████╗███████╗██████╗
+  ██╔════╝██╔══██╗██╔══██╗██╔══██╗██║██╔════╝██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
+  █████╗  ███████║██████╔╝██████╔╝██║██║     ███████║   ██║   █████╗  ██║  ██║
+  ██╔══╝  ██╔══██║██╔══██╗██╔══██╗██║██║     ██╔══██║   ██║   ██╔══╝  ██║  ██║
+  ██║     ██║  ██║██████╔╝██║  ██║██║╚██████╗██║  ██║   ██║   ███████╗██████╔╝
+  ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═════╝</pre>
+
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Hardware Build Series — Long Beach, CA — Summer 2026</span></div>
+        <div class="ln"><span class="dim">  Type </span><span class="hi">help</span><span class="dim"> to see available commands, or just start exploring.</span></div>
+        <div class="blank"></div>
+        <div class="ln sep">  ────────────────────────────────────────────────────────────────────</div>
+      </div>
+
+      <!-- SCREEN 2: About -->
+      <div class="screen">
+        <div class="screen-label">about</div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">about</span></div>
+        <div class="blank"></div>
+
+        <div class="box">
+          <div class="box-header">Workshop Details</div>
+          <div class="tbl">
+            <div class="tbl-row">
+              <span class="tbl-key">  What</span>
+              <span class="tbl-val">Hands-on hardware build workshop</span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  Where</span>
+              <span class="tbl-val"><span class="hi">Long Beach, CA</span></span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  When</span>
+              <span class="tbl-val"><span class="hi">Summer 2026</span></span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  Status</span>
+              <span class="tbl-val"><span class="ok">● Registering</span></span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  AI Partner</span>
+              <span class="tbl-val">Claude Code (Anthropic)</span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  Hardware</span>
+              <span class="tbl-val">Arduino-based projects</span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  Take Home</span>
+              <span class="tbl-val">Everything you build</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ln"><span class="out">  You solder it, wire it, program it — you keep it.</span></div>
+        <div class="ln"><span class="out">  Claude Code guides you through every step.</span></div>
+      </div>
+
+      <!-- SCREEN 3: Projects list -->
+      <div class="screen">
+        <div class="screen-label">projects</div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">projects</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  3 workshop projects available:</span></div>
+        <div class="blank"></div>
+
+        <div class="card-grid">
+          <div class="term-card">
+            <div class="term-card-header">
+              <span class="term-card-title"><span class="hi">01</span> Weather Station</span>
+              <span class="term-card-tag">Beginner</span>
+            </div>
+            <div class="term-card-desc">
+              Temperature, humidity, pressure sensor → OLED display.<br>
+              Data logging to SD card. Battery powered.
+            </div>
+          </div>
+          <div class="term-card">
+            <div class="term-card-header">
+              <span class="term-card-title"><span class="teal">02</span> MIDI Controller</span>
+              <span class="term-card-tag">Intermediate</span>
+            </div>
+            <div class="term-card-desc">
+              Custom knobs + buttons → USB-MIDI output.<br>
+              Design your own layout. Plug into any DAW.
+            </div>
+          </div>
+          <div class="term-card">
+            <div class="term-card-header">
+              <span class="term-card-title"><span class="copper">03</span> LED Installation</span>
+              <span class="term-card-tag">Intermediate</span>
+            </div>
+            <div class="term-card-desc">
+              Addressable LED strip, custom patterns.<br>
+              Sound-reactive mode. 3D-printed enclosure.
+            </div>
+          </div>
+          <div class="term-card" style="border-style: dashed; opacity: 0.5;">
+            <div class="term-card-header">
+              <span class="term-card-title"><span class="dim">04</span> <span class="dim">???</span></span>
+              <span class="term-card-tag">Coming Soon</span>
+            </div>
+            <div class="term-card-desc">
+              Community-voted project. Suggest yours at the workshop.
+            </div>
+          </div>
+        </div>
+
+        <div class="blank"></div>
+        <div class="ln"><span class="dim">  Type </span><span class="teal">projects &lt;name&gt;</span><span class="dim"> for full details, parts list, and wiring diagram.</span></div>
+      </div>
+
+      <!-- SCREEN 4: A project deep dive -->
+      <div class="screen">
+        <div class="screen-label">project detail</div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">projects midi-controller</span></div>
+        <div class="blank"></div>
+
+        <pre class="ascii-small">
+    ┌──────────────────────────────────────────┐
+    │  ◉ FREQ    ◉ RESO    ◉ CUTOFF   ◉ VOL  │
+    │                                          │
+    │  [BTN1]  [BTN2]  [BTN3]  [BTN4]  [BTN5] │
+    │                                          │
+    │  ◉ ATK     ◉ DEC     ◉ SUS     ◉ REL   │
+    │                          ┌──────────┐    │
+    │  [BTN6]  [BTN7]  [BTN8] │ USB-MIDI │    │
+    │                          └──────────┘    │
+    └──────────────────────────────────────────┘</pre>
+
+        <div class="blank"></div>
+
+        <div class="box">
+          <div class="box-header">MIDI Controller — Project 02</div>
+          <div class="tbl">
+            <div class="tbl-row">
+              <span class="tbl-key">  Difficulty</span>
+              <span class="tbl-val"><span class="hi">■ ■ ■</span><span class="dim"> ■ ■</span>  Intermediate</span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  Build Time</span>
+              <span class="tbl-val">~3 hours</span>
+            </div>
+            <div class="tbl-row">
+              <span class="tbl-key">  Board</span>
+              <span class="tbl-val">Arduino Leonardo</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ln"><span class="bold">  Parts List:</span></div>
+        <div class="ln"><span class="out">  ├── Arduino Leonardo (USB-MIDI native)</span></div>
+        <div class="ln"><span class="out">  ├── 8x 10kΩ potentiometers (knobs)</span></div>
+        <div class="ln"><span class="out">  ├── 8x tactile push buttons</span></div>
+        <div class="ln"><span class="out">  ├── 1x full-size breadboard</span></div>
+        <div class="ln"><span class="out">  ├── Jumper wires (assorted)</span></div>
+        <div class="ln"><span class="out">  ├── USB-C cable</span></div>
+        <div class="ln"><span class="out">  └── Laser-cut enclosure (provided)</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="bold">  What You'll Learn:</span></div>
+        <div class="ln"><span class="out">  ├── Analog-to-digital conversion (reading knobs)</span></div>
+        <div class="ln"><span class="out">  ├── Digital input debouncing (reading buttons)</span></div>
+        <div class="ln"><span class="out">  ├── USB-MIDI protocol basics</span></div>
+        <div class="ln"><span class="out">  ├── Claude Code: generating MIDI mappings</span></div>
+        <div class="ln"><span class="out">  └── Enclosure assembly & cable management</span></div>
+      </div>
+
+      <!-- SCREEN 5: Learning module preview -->
+      <div class="screen">
+        <div class="screen-label">learn</div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">learn arduino --lesson 1</span></div>
+        <div class="blank"></div>
+
+        <div class="box">
+          <div class="box-header">Module 02 — Arduino — Lesson 01: What is Arduino?</div>
+          <div class="blank"></div>
+          <div class="ln"><span class="bold">  Arduino is an open-source electronics platform based on</span></div>
+          <div class="ln"><span class="bold">  easy-to-use hardware and software.</span></div>
+          <div class="blank"></div>
+          <div class="ln"><span class="out">  At its heart is a small computer called a microcontroller — a</span></div>
+          <div class="ln"><span class="out">  chip that can read inputs (a sensor detecting light, a finger</span></div>
+          <div class="ln"><span class="out">  pressing a button) and turn them into outputs (lighting an LED,</span></div>
+          <div class="ln"><span class="out">  spinning a motor, publishing data online).</span></div>
+          <div class="blank"></div>
+          <div class="ln"><span class="out">  Unlike your laptop, a microcontroller runs </span><span class="hi">one program</span></div>
+          <div class="ln"><span class="hi">  at a time</span><span class="out">, in a loop, forever. This makes it perfect for</span></div>
+          <div class="ln"><span class="out">  dedicated tasks.</span></div>
+          <div class="blank"></div>
+          <div class="ln"><span class="dim">  // Your first Arduino sketch — "Blink"</span></div>
+          <div class="ln"><span class="teal">  void</span> <span class="hi">setup</span><span class="out">() {</span></div>
+          <div class="ln"><span class="out">    </span><span class="hi">pinMode</span><span class="out">(LED_BUILTIN, </span><span class="copper">OUTPUT</span><span class="out">);</span></div>
+          <div class="ln"><span class="out">  }</span></div>
+          <div class="blank"></div>
+          <div class="ln"><span class="teal">  void</span> <span class="hi">loop</span><span class="out">() {</span></div>
+          <div class="ln"><span class="out">    </span><span class="hi">digitalWrite</span><span class="out">(LED_BUILTIN, </span><span class="copper">HIGH</span><span class="out">);  </span><span class="dim">// LED on</span></div>
+          <div class="ln"><span class="out">    </span><span class="hi">delay</span><span class="out">(</span><span class="copper">1000</span><span class="out">);                     </span><span class="dim">// wait 1s</span></div>
+          <div class="ln"><span class="out">    </span><span class="hi">digitalWrite</span><span class="out">(LED_BUILTIN, </span><span class="copper">LOW</span><span class="out">);   </span><span class="dim">// LED off</span></div>
+          <div class="ln"><span class="out">    </span><span class="hi">delay</span><span class="out">(</span><span class="copper">1000</span><span class="out">);                     </span><span class="dim">// wait 1s</span></div>
+          <div class="ln"><span class="out">  }</span></div>
+        </div>
+
+        <div class="blank"></div>
+
+        <div class="ln"><span class="out">  Progress:</span></div>
+        <div class="progress-bar">
+          <span class="progress-label">  Lesson 1 of 8</span>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 12.5%;"></div>
+          </div>
+          <span class="progress-pct">12%</span>
+        </div>
+        <div class="blank"></div>
+        <div class="ln"><span class="dim">  Type </span><span class="teal">learn arduino --next</span><span class="dim"> to continue, or </span><span class="teal">learn arduino --list</span><span class="dim"> for all lessons.</span></div>
+      </div>
+
+      <!-- SCREEN 6: Theme + signup -->
+      <div class="screen">
+        <div class="screen-label">customization &amp; signup</div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">theme</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Available themes:</span></div>
+        <div class="blank"></div>
+
+        <div class="theme-swatches">
+          <div class="theme-swatch active">
+            <div class="theme-dot" style="background: #D4A55A; box-shadow: 0 0 6px rgba(212,165,90,0.4);"></div>
+            <span class="theme-name">amber</span>
+          </div>
+          <div class="theme-swatch">
+            <div class="theme-dot" style="background: #5A8A8A; box-shadow: 0 0 6px rgba(90,138,138,0.4);"></div>
+            <span class="theme-name">teal</span>
+          </div>
+          <div class="theme-swatch">
+            <div class="theme-dot" style="background: #B87333; box-shadow: 0 0 6px rgba(184,115,51,0.4);"></div>
+            <span class="theme-name">copper</span>
+          </div>
+          <div class="theme-swatch">
+            <div class="theme-dot" style="background: #CD6464; box-shadow: 0 0 6px rgba(205,100,100,0.4);"></div>
+            <span class="theme-name">solder</span>
+          </div>
+          <div class="theme-swatch">
+            <div class="theme-dot" style="background: #E8E4DC;"></div>
+            <span class="theme-name">light</span>
+          </div>
+        </div>
+
+        <div class="blank"></div>
+        <div class="ln"><span class="dim">  Usage: </span><span class="teal">theme &lt;name&gt;</span></div>
+        <div class="blank"></div>
+        <div class="ln sep">  ────────────────────────────────────────────────────────────────────</div>
+        <div class="blank"></div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">signup</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Get notified when registration opens.</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="teal">  Email: </span><span class="cmd">maker@example.com</span></div>
+        <div class="ln"><span class="teal">  Name:  </span><span class="cmd">Alex Chen</span></div>
+        <div class="ln"><span class="teal">  Interest: </span><span class="dim">(select with arrow keys)</span></div>
+        <div class="ln"><span class="out">    </span><span class="hi">❯ MIDI Controller</span></div>
+        <div class="ln"><span class="out">      Weather Station</span></div>
+        <div class="ln"><span class="out">      LED Installation</span></div>
+        <div class="ln"><span class="out">      All of them</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="ok">  ✓ You're on the list, Alex. We'll email you when it's time.</span></div>
+      </div>
+
+      <!-- SCREEN 7: Help -->
+      <div class="screen">
+        <div class="screen-label">help</div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">help</span></div>
+        <div class="blank"></div>
+
+        <div class="box">
+          <div class="box-header">Available Commands</div>
+          <div class="blank"></div>
+          <div class="ln"><span class="dim">  Navigation</span></div>
+          <div class="ln">  <span class="hi" style="display:inline-block;width:220px;">about</span><span class="out">Workshop details and overview</span></div>
+          <div class="ln">  <span class="hi" style="display:inline-block;width:220px;">projects</span><span class="out">Browse all workshop projects</span></div>
+          <div class="ln">  <span class="hi" style="display:inline-block;width:220px;">projects &lt;name&gt;</span><span class="out">Deep dive into a specific project</span></div>
+          <div class="blank"></div>
+          <div class="ln"><span class="dim">  Learning</span></div>
+          <div class="ln">  <span class="teal" style="display:inline-block;width:220px;">learn claude-code</span><span class="out">What is Claude Code + getting started</span></div>
+          <div class="ln">  <span class="teal" style="display:inline-block;width:220px;">learn arduino</span><span class="out">Introduction to Arduino platform</span></div>
+          <div class="ln">  <span class="teal" style="display:inline-block;width:220px;">learn electronics</span><span class="out">Circuits, components, fundamentals</span></div>
+          <div class="ln">  <span class="teal" style="display:inline-block;width:220px;">learn &lt;module&gt; --lesson N</span><span class="out">Jump to a specific lesson</span></div>
+          <div class="ln">  <span class="teal" style="display:inline-block;width:220px;">learn &lt;module&gt; --next</span><span class="out">Continue where you left off</span></div>
+          <div class="blank"></div>
+          <div class="ln"><span class="dim">  Actions</span></div>
+          <div class="ln">  <span class="copper" style="display:inline-block;width:220px;">signup</span><span class="out">Register for workshop updates</span></div>
+          <div class="ln">  <span class="copper" style="display:inline-block;width:220px;">theme &lt;name&gt;</span><span class="out">Switch color theme</span></div>
+          <div class="ln">  <span class="copper" style="display:inline-block;width:220px;">clear</span><span class="out">Clear terminal</span></div>
+          <div class="ln">  <span class="copper" style="display:inline-block;width:220px;">exit</span><span class="out">Close terminal (just kidding)</span></div>
+        </div>
+
+        <div class="blank"></div>
+        <div class="ln"><span class="dim">  Tab completion and arrow-key history are supported.</span></div>
+        <div class="ln"><span class="dim">  Commands are case-insensitive.</span></div>
+      </div>
+
+      <!-- Active prompt -->
+      <div class="screen" style="border-bottom: none;">
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cursor"></span></div>
+      </div>
+    </div>
+
+    <!-- === STATUS BAR === -->
+    <div class="statusbar">
+      <div class="statusbar-left">
+        <div class="status-item">
+          <span class="status-led status-led-amber"></span>
+          fabricated v1.0
+        </div>
+        <div class="status-item">
+          theme: amber
+        </div>
+        <div class="status-item">
+          3 modules available
+        </div>
+      </div>
+      <div class="statusbar-right">
+        <div class="status-item">
+          <span class="status-led status-led-teal"></span>
+          connected
+        </div>
+        <div class="status-item">
+          "help" for commands
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

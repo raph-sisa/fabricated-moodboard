@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FABRICATED — Hardware Workshop</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --primary: #D4A55A;
+  --primary-dim: rgba(212,165,90,0.12);
+  --secondary: #5A8A8A;
+  --accent: #B87333;
+  --bg: #0D0D0D;
+  --surface: #151514;
+  --surface-2: #1A1A18;
+  --surface-3: #222220;
+  --text: #E8E4DC;
+  --text-2: #8F837A;
+  --text-3: #5A5650;
+  --text-4: #3A3835;
+  --border: #2A2A27;
+  --border-dim: #1E1E1C;
+  --font-display: 'VT323', monospace;
+  --font-body: 'IBM Plex Mono', monospace;
+  --font-content: 'DM Sans', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── PCB GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(184,115,51,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184,115,51,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── AMBIENT GLOW ORBS ── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 { width: 500px; height: 500px; background: rgba(212,165,90,0.04); top: -100px; right: -100px; }
+.orb-2 { width: 400px; height: 400px; background: rgba(90,138,138,0.04); bottom: 200px; left: -100px; }
+.orb-3 { width: 350px; height: 350px; background: rgba(184,115,51,0.03); top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(13,13,13,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-dim);
+  padding: 0 48px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--primary);
+  letter-spacing: 6px;
+  cursor: pointer;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-2);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: all 0.25s ease;
+  background: transparent;
+  user-select: none;
+}
+.nav-tab:last-child { border-right: none; }
+.nav-tab:hover { color: var(--text); background: var(--surface); }
+
+.nav-tab.active[data-color="amber"] { background: var(--primary-dim); color: var(--primary); }
+.nav-tab.active[data-color="teal"] { background: rgba(90,138,138,0.12); color: var(--secondary); }
+.nav-tab.active[data-color="copper"] { background: rgba(184,115,51,0.12); color: var(--accent); }
+
+.led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-4);
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.nav-tab.active .led { animation: ledPulse 2s ease-in-out infinite; }
+.nav-tab.active[data-color="amber"] .led { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+.nav-tab.active[data-color="teal"] .led { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
+.nav-tab.active[data-color="copper"] .led { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+@keyframes ledPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.nav-cta {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  background: var(--primary);
+  color: var(--bg);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.nav-cta:hover { background: #e0b368; transform: translateY(-1px); }
+
+/* ── PAGE SECTIONS ── */
+.page { display: none; position: relative; z-index: 1; }
+.page.active { display: block; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  padding: 140px 80px 80px;
+  display: flex;
+  gap: 80px;
+  align-items: center;
+}
+
+.hero-left { flex: 1.2; }
+
+.hero-headline {
+  font-family: var(--font-display);
+  font-size: 7rem;
+  line-height: 0.95;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+.hero-headline .amber { color: var(--primary); }
+
+.hero-sub {
+  font-family: var(--font-content);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-2);
+  max-width: 480px;
+  margin-bottom: 40px;
+}
+
+.email-row {
+  display: flex;
+  gap: 12px;
+  max-width: 420px;
+}
+
+.email-input {
+  flex: 1;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.email-input::placeholder { color: var(--text-3); }
+.email-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(212,165,90,0.15), 0 0 20px rgba(212,165,90,0.08);
+}
+
+.email-btn {
+  padding: 14px 28px;
+  background: var(--primary);
+  color: var(--bg);
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.email-btn:hover { background: #e0b368; transform: translateY(-1px); }
+
+/* ── KORG PANEL ── */
+.hero-right { flex: 1; display: flex; justify-content: flex-end; }
+
+.korg-panel {
+  width: 420px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.korg-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.korg-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+}
+
+.korg-leds {
+  display: flex;
+  gap: 6px;
+}
+.korg-leds span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.korg-led-amber { background: var(--primary); box-shadow: 0 0 6px var(--primary); animation: ledPulse 2s ease-in-out infinite; }
+.korg-led-teal { background: var(--secondary); opacity: 0.4; }
+.korg-led-copper { background: var(--accent); opacity: 0.4; }
+
+.oled-screen {
+  margin: 16px;
+  padding: 24px;
+  background: #020202;
+  border-radius: 4px;
+  border: 1px solid #111;
+}
+
+.oled-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  align-items: baseline;
+}
+.oled-row:last-child { margin-bottom: 0; }
+
+.oled-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-3);
+}
+
+.oled-value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--primary);
+}
+
+.oled-value.large {
+  font-size: 32px;
+}
+
+.countdown-row {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #1a1a18;
+}
+
+.waveform-container {
+  margin: 16px;
+  padding: 16px;
+  background: #020202;
+  border-radius: 4px;
+  border: 1px solid #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waveform-svg {
+  width: 100%;
+  height: 48px;
+}
+
+.step-sequencer {
+  margin: 0 16px 16px;
+  padding: 14px 16px;
+  background: #020202;
+  border-radius: 4px;
+  border: 1px solid #111;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.seq-led {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: #1a1a18;
+  border: 1px solid #222;
+  transition: all 0.15s ease;
+}
+.seq-led.active {
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary), 0 0 4px var(--primary);
+  border-color: var(--primary);
+  animation: ledPulse 1s ease-in-out infinite;
+}
+
+.korg-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.korg-footer-label {
+  font-family: var(--font-body);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-4);
+}
+
+/* ── WOOD GRAIN DIVIDER ── */
+.wood-divider {
+  height: 3px;
+  margin: 0 80px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--accent) 15%,
+    var(--primary) 40%,
+    var(--accent) 60%,
+    var(--primary) 85%,
+    transparent 100%
+  );
+  opacity: 0.25;
+  border-radius: 2px;
+}
+
+/* ── SECTION WRAPPER ── */
+.section-wrap {
+  padding: 100px 80px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.section-sub {
+  font-family: var(--font-content);
+  font-size: 15px;
+  color: var(--text-2);
+  margin-bottom: 56px;
+  max-width: 520px;
+}
+
+/* ── MODULE CARDS ── */
+.modules-panel {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 32px;
+}
+
+.modules-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.modules-header-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+}
+
+.module-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.module-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  padding: 28px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.module-card:hover {
+  border-color: var(--border);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.module-led-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.module-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.module-led.amber { background: var(--primary); box-shadow: 0 0 8px var(--primary); animation: ledPulse 2.5s ease-in-out infinite; }
+.module-led.teal { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); animation: ledPulse 2.5s ease-in-out 0.3s infinite; }
+.module-led.copper { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: ledPulse 2.5s ease-in-out 0.6s infinite; }
+
+.module-num {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 1px;
+}
+
+.module-name {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.module-desc {
+  font-family: var(--font-content);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.module-meta {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+
+.module-link {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: color 0.2s;
+}
+.module-link:hover { color: #e0b368; }
+
+/* ── PROJECTS SECTION (HOME) ── */
+.projects-section {
+  background: var(--surface);
+  border-top: 1px solid var(--border-dim);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.project-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.project-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.project-card:hover {
+  border-color: var(--border);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+
+.project-ascii {
+  background: #020202;
+  padding: 24px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre;
+  border-bottom: 1px solid var(--border-dim);
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.project-ascii.amber { color: var(--primary); }
+.project-ascii.teal { color: var(--secondary); }
+.project-ascii.copper { color: var(--accent); }
+
+.project-body {
+  padding: 24px;
+}
+
+.project-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.project-desc {
+  font-family: var(--font-content);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.project-tag {
+  font-family: var(--font-body);
+  font-size: 10px;
+  padding: 4px 10px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-dim);
+  border-radius: 3px;
+  color: var(--text-3);
+  letter-spacing: 0.5px;
+}
+
+/* ── DETAILS GRID ── */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  padding: 32px;
+  border-top: 2px solid var(--border);
+}
+.detail-card.amber-top { border-top-color: var(--primary); }
+.detail-card.teal-top { border-top-color: var(--secondary); }
+.detail-card.copper-top { border-top-color: var(--accent); }
+
+.detail-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  margin-bottom: 16px;
+}
+
+.detail-text {
+  font-family: var(--font-content);
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.8;
+}
+
+.detail-text ul {
+  list-style: none;
+  padding: 0;
+}
+.detail-text ul li {
+  padding: 4px 0;
+  padding-left: 16px;
+  position: relative;
+}
+.detail-text ul li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--text-3);
+}
+
+/* ── QUOTE ── */
+.quote-section {
+  padding: 80px;
+  text-align: center;
+}
+
+.quote-text {
+  font-family: var(--font-content);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--text-2);
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 80px;
+  border-top: 1px solid var(--border-dim);
+  display: flex;
+  gap: 80px;
+}
+
+.footer-brand { flex: 1; }
+
+.footer-logo {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--primary);
+  letter-spacing: 5px;
+  margin-bottom: 12px;
+}
+
+.footer-tagline {
+  font-family: var(--font-content);
+  font-size: 13px;
+  color: var(--text-3);
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+.footer-col {
+  min-width: 120px;
+}
+
+.footer-col-title {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  margin-bottom: 20px;
+}
+
+.footer-col a {
+  display: block;
+  font-family: var(--font-content);
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 5px 0;
+  transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--primary); }
+
+/* ── CLAUDE CODE PAGE ── */
+.learn-page {
+  padding-top: 96px;
+}
+
+.learn-hero {
+  padding: 48px 80px 40px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.learn-hero-title {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  margin-bottom: 8px;
+}
+
+.learn-hero-sub {
+  font-family: var(--font-content);
+  font-size: 16px;
+  color: var(--text-2);
+}
+
+.learn-layout {
+  display: flex;
+  min-height: calc(100vh - 250px);
+}
+
+.learn-sidebar {
+  width: 280px;
+  border-right: 1px solid var(--border-dim);
+  padding: 32px 0;
+  flex-shrink: 0;
+}
+
+.learn-sidebar-title {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  padding: 0 24px;
+  margin-bottom: 16px;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-2);
+  border-left: 2px solid transparent;
+}
+.lesson-item:hover { background: var(--surface); color: var(--text); }
+.lesson-item.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+.lesson-num {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-4);
+  min-width: 24px;
+}
+.lesson-item.active .lesson-num { color: var(--primary); }
+
+.learn-content {
+  flex: 1;
+  padding: 48px 64px;
+  max-width: 800px;
+}
+
+.learn-content h2 {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.learn-content p {
+  font-family: var(--font-content);
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.learn-content h3 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  margin-top: 36px;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.code-block {
+  background: #020202;
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  padding: 24px;
+  margin: 20px 0;
+  overflow-x: auto;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.code-block .keyword { color: var(--secondary); }
+.code-block .func { color: var(--primary); }
+.code-block .string { color: var(--accent); }
+.code-block .comment { color: var(--text-4); }
+.code-block .number { color: #8a7ada; }
+
+/* ── ARDUINO PAGE ── */
+.progress-bar-wrap {
+  margin: 0 80px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.progress-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  height: 3px;
+  background: var(--surface-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--secondary);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px rgba(90,138,138,0.3);
+}
+
+/* ── PROJECTS PAGE ── */
+.projects-page-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+.project-full {
+  background: var(--surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.project-full-top {
+  display: flex;
+}
+
+.project-full-ascii {
+  width: 360px;
+  background: #020202;
+  padding: 32px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border-dim);
+  flex-shrink: 0;
+}
+
+.project-full-info {
+  padding: 32px 40px;
+  flex: 1;
+}
+
+.project-full-name {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  margin-bottom: 12px;
+}
+
+.project-full-desc {
+  font-family: var(--font-content);
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+.parts-list {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 2;
+}
+
+.parts-title {
+  font-family: var(--font-body);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.learn-list {
+  padding: 24px 40px;
+  border-top: 1px solid var(--border-dim);
+}
+
+.learn-list-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  color: var(--secondary);
+}
+
+.learn-list ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 40px;
+}
+
+.learn-list ul li {
+  font-family: var(--font-content);
+  font-size: 13px;
+  color: var(--text-2);
+  padding-left: 16px;
+  position: relative;
+}
+.learn-list ul li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--secondary);
+}
+
+/* ── LESSON CONTENT BLOCKS (hidden by default) ── */
+.lesson-content { display: none; }
+.lesson-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- ════════════════════ NAV ════════════════════ -->
+<nav>
+  <div class="nav-logo" onclick="switchPage('home')">FABRICATED</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-page="home" data-color="amber" onclick="switchPage('home')">
+      <span class="led"></span> Home
+    </div>
+    <div class="nav-tab" data-page="claude" data-color="teal" onclick="switchPage('claude')">
+      <span class="led"></span> Claude Code
+    </div>
+    <div class="nav-tab" data-page="arduino" data-color="teal" onclick="switchPage('arduino')">
+      <span class="led"></span> Arduino
+    </div>
+    <div class="nav-tab" data-page="projects" data-color="copper" onclick="switchPage('projects')">
+      <span class="led"></span> Projects
+    </div>
+  </div>
+  <button class="nav-cta">Register</button>
+</nav>
+
+<!-- ════════════════════ HOME PAGE ════════════════════ -->
+<div id="page-home" class="page active">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left reveal">
+      <h1 class="hero-headline">Build <span class="amber">Real</span><br>Hardware.</h1>
+      <p class="hero-sub">A hands-on workshop where software meets solder. Learn Claude Code, Arduino, and electronics fundamentals — then build three real projects you take home.</p>
+      <div class="email-row">
+        <input type="email" class="email-input" placeholder="your@email.com">
+        <button class="email-btn">Notify Me</button>
+      </div>
+    </div>
+    <div class="hero-right reveal">
+      <div class="korg-panel">
+        <div class="korg-header">
+          <span class="korg-label">Workshop Status</span>
+          <div class="korg-leds">
+            <span class="korg-led-amber"></span>
+            <span class="korg-led-teal"></span>
+            <span class="korg-led-copper"></span>
+          </div>
+        </div>
+        <div class="oled-screen">
+          <div class="oled-row">
+            <span class="oled-label">Location</span>
+            <span class="oled-value">Portland, OR</span>
+          </div>
+          <div class="oled-row">
+            <span class="oled-label">Status</span>
+            <span class="oled-value" style="color: var(--secondary);">Enrolling</span>
+          </div>
+          <div class="oled-row countdown-row">
+            <span class="oled-label">Countdown</span>
+            <span class="oled-value large" id="countdown">127:14:32:00</span>
+          </div>
+        </div>
+        <div class="waveform-container">
+          <svg class="waveform-svg" viewBox="0 0 380 48" fill="none">
+            <path d="M0 24 Q10 4, 20 24 Q30 44, 40 24 Q50 4, 60 24 Q70 44, 80 24 Q90 4, 100 24 Q110 44, 120 24 Q130 4, 140 24 Q150 44, 160 24 Q170 4, 180 24 Q190 44, 200 24 Q210 4, 220 24 Q230 44, 240 24 Q250 4, 260 24 Q270 44, 280 24 Q290 4, 300 24 Q310 44, 320 24 Q330 4, 340 24 Q350 44, 360 24 Q370 4, 380 24"
+              stroke="rgba(212,165,90,0.3)" stroke-width="1.5" fill="none"/>
+            <path d="M0 24 Q20 10, 40 24 Q60 38, 80 24 Q100 10, 120 24 Q140 38, 160 24 Q180 10, 200 24 Q220 38, 240 24 Q260 10, 280 24 Q300 38, 320 24 Q340 10, 360 24 Q380 38, 380 24"
+              stroke="rgba(90,138,138,0.25)" stroke-width="1" fill="none"/>
+          </svg>
+        </div>
+        <div class="step-sequencer" id="sequencer">
+          <div class="seq-led active"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+          <div class="seq-led"></div>
+        </div>
+        <div class="korg-footer">
+          <span class="korg-footer-label">FABRICATED v1.0</span>
+          <span class="korg-footer-label">16 STEPS</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WOOD DIVIDER -->
+  <div class="wood-divider"></div>
+
+  <!-- LEARNING MODULES -->
+  <section class="section-wrap">
+    <h2 class="section-title reveal">Learning Modules</h2>
+    <p class="section-sub reveal">Three structured paths from zero to building. Each module builds on the last.</p>
+    <div class="modules-panel reveal">
+      <div class="modules-header">
+        <div class="korg-leds">
+          <span class="korg-led-amber"></span>
+          <span class="korg-led-teal"></span>
+          <span class="korg-led-copper"></span>
+        </div>
+        <span class="modules-header-label">Module Rack</span>
+      </div>
+      <div class="module-cards">
+        <div class="module-card" onclick="switchPage('claude')">
+          <div class="module-led-row">
+            <div class="module-led teal"></div>
+            <span class="module-num">MODULE 01</span>
+          </div>
+          <div class="module-name">Claude Code</div>
+          <p class="module-desc">AI-assisted development for hardware projects. Learn to use Claude as your co-pilot for firmware and embedded systems.</p>
+          <div class="module-meta">6 lessons &middot; 4 hours</div>
+          <a class="module-link" href="javascript:void(0)" onclick="event.stopPropagation(); switchPage('claude')">Begin &rarr;</a>
+        </div>
+        <div class="module-card" onclick="switchPage('arduino')">
+          <div class="module-led-row">
+            <div class="module-led teal"></div>
+            <span class="module-num">MODULE 02</span>
+          </div>
+          <div class="module-name">Arduino</div>
+          <p class="module-desc">From blinking LEDs to reading sensors and driving motors. The physical computing foundation.</p>
+          <div class="module-meta">8 lessons &middot; 6 hours</div>
+          <a class="module-link" href="javascript:void(0)" onclick="event.stopPropagation(); switchPage('arduino')">Begin &rarr;</a>
+        </div>
+        <div class="module-card" onclick="switchPage('projects')">
+          <div class="module-led-row">
+            <div class="module-led copper"></div>
+            <span class="module-num">MODULE 03</span>
+          </div>
+          <div class="module-name">Electronics 101</div>
+          <p class="module-desc">Resistors, capacitors, voltage dividers, and reading datasheets. The theory that makes it all click.</p>
+          <div class="module-meta">5 lessons &middot; 3 hours</div>
+          <a class="module-link" href="javascript:void(0)" onclick="event.stopPropagation(); switchPage('projects')">Begin &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WOOD DIVIDER -->
+  <div class="wood-divider"></div>
+
+  <!-- PROJECTS -->
+  <section class="section-wrap projects-section">
+    <h2 class="section-title reveal">Projects</h2>
+    <p class="section-sub reveal">Three take-home builds that combine everything you learn.</p>
+    <div class="project-cards reveal">
+      <div class="project-card" onclick="switchPage('projects')">
+        <div class="project-ascii amber">
+  ┌─────────────┐
+  │  ╔═══════╗  │
+  │  ║ 72°F  ║  │
+  │  ║ 45%RH ║  │
+  │  ╚═══════╝  │
+  │ ◉ ◎ ◎  [≋] │
+  └─────────────┘
+        </div>
+        <div class="project-body">
+          <div class="project-name">Weather Station</div>
+          <p class="project-desc">OLED display, BME280 sensor, ambient light detection. Logs data to SD card with Claude-generated firmware.</p>
+          <div class="project-tags">
+            <span class="project-tag">Arduino Nano</span>
+            <span class="project-tag">BME280</span>
+            <span class="project-tag">OLED 128x64</span>
+            <span class="project-tag">SD Card</span>
+          </div>
+        </div>
+      </div>
+      <div class="project-card" onclick="switchPage('projects')">
+        <div class="project-ascii teal">
+  ┌──────────────────┐
+  │ ♩ ♪ ♫ ♬         │
+  │ ┌──┬──┬──┬──┐   │
+  │ │▓▓│  │▓▓│  │   │
+  │ │▓▓│  │▓▓│  │   │
+  │ ├──┼──┼──┼──┤   │
+  │ │  │  │  │  │   │
+  │ └──┴──┴──┴──┘   │
+  └──────────────────┘
+        </div>
+        <div class="project-body">
+          <div class="project-name">MIDI Controller</div>
+          <p class="project-desc">8 velocity-sensitive pads, 4 rotary encoders, MIDI over USB. Custom PCB with copper pour aesthetic.</p>
+          <div class="project-tags">
+            <span class="project-tag">Teensy 4.0</span>
+            <span class="project-tag">FSR Pads</span>
+            <span class="project-tag">Encoders</span>
+            <span class="project-tag">USB-MIDI</span>
+          </div>
+        </div>
+      </div>
+      <div class="project-card" onclick="switchPage('projects')">
+        <div class="project-ascii copper">
+  ◆ ─ ─ ◇ ─ ─ ◆
+  │           │
+  ◇    ✦ ✦    ◇
+  │  ✦ ✦ ✦ ✦  │
+  ◆  ✦ ✦ ✦ ✦  ◆
+  │    ✦ ✦    │
+  ◇           ◇
+  ◆ ─ ─ ◇ ─ ─ ◆
+        </div>
+        <div class="project-body">
+          <div class="project-name">LED Installation</div>
+          <p class="project-desc">Addressable LED matrix with reactive patterns. Sound-responsive modes using MEMS microphone and FFT analysis.</p>
+          <div class="project-tags">
+            <span class="project-tag">ESP32</span>
+            <span class="project-tag">WS2812B</span>
+            <span class="project-tag">MEMS Mic</span>
+            <span class="project-tag">FFT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WOOD DIVIDER -->
+  <div class="wood-divider"></div>
+
+  <!-- WORKSHOP DETAILS -->
+  <section class="section-wrap">
+    <h2 class="section-title reveal">Workshop Details</h2>
+    <p class="section-sub reveal">Everything you need to know before signing up.</p>
+    <div class="details-grid reveal">
+      <div class="detail-card amber-top">
+        <div class="detail-title">What You Get</div>
+        <div class="detail-text">
+          <ul>
+            <li>All three completed projects (yours to keep)</li>
+            <li>Component kit with extras for future builds</li>
+            <li>Lifetime access to learning materials</li>
+            <li>Soldering station access during workshop</li>
+            <li>Claude Code workshop license (3 months)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card teal-top">
+        <div class="detail-title">Workshop Flow</div>
+        <div class="detail-text">
+          <ul>
+            <li>Day 1 — Foundations: Claude Code + Arduino basics</li>
+            <li>Day 2 — Sensors: Weather Station build</li>
+            <li>Day 3 — Interfaces: MIDI Controller build</li>
+            <li>Day 4 — Integration: LED Installation build</li>
+            <li>Day 5 — Polish: Debug, refine, present</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card copper-top">
+        <div class="detail-title">Prerequisites</div>
+        <div class="detail-text">
+          <ul>
+            <li>Basic programming knowledge (any language)</li>
+            <li>Laptop with USB ports</li>
+            <li>No hardware experience needed</li>
+            <li>Curiosity and willingness to learn</li>
+            <li>Comfortable with command-line basics</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-title">Location &amp; Schedule</div>
+        <div class="detail-text">
+          <ul>
+            <li>ADX Portland — 417 SE 11th Ave</li>
+            <li>July 2026 (exact dates TBA)</li>
+            <li>9 AM – 5 PM, Mon–Fri</li>
+            <li>Max 16 participants per cohort</li>
+            <li>Coffee and lunch provided</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WOOD DIVIDER -->
+  <div class="wood-divider"></div>
+
+  <!-- QUOTE -->
+  <section class="quote-section">
+    <div class="wood-divider" style="margin: 0 0 60px 0;"></div>
+    <p class="quote-text reveal">"The best way to understand technology is to build it with your hands."</p>
+    <div class="wood-divider" style="margin: 60px 0 0 0;"></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <div class="footer-logo">FABRICATED</div>
+      <p class="footer-tagline">Where software meets solder. A hands-on hardware workshop for curious builders.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Learn</div>
+      <a href="javascript:void(0)" onclick="switchPage('claude')">Claude Code</a>
+      <a href="javascript:void(0)" onclick="switchPage('arduino')">Arduino</a>
+      <a href="javascript:void(0)" onclick="switchPage('projects')">Electronics 101</a>
+      <a href="javascript:void(0)">Resources</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Build</div>
+      <a href="javascript:void(0)" onclick="switchPage('projects')">Weather Station</a>
+      <a href="javascript:void(0)" onclick="switchPage('projects')">MIDI Controller</a>
+      <a href="javascript:void(0)" onclick="switchPage('projects')">LED Installation</a>
+      <a href="javascript:void(0)">Parts List</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Connect</div>
+      <a href="javascript:void(0)">Discord</a>
+      <a href="javascript:void(0)">GitHub</a>
+      <a href="javascript:void(0)">Newsletter</a>
+      <a href="javascript:void(0)">Contact</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ════════════════════ CLAUDE CODE PAGE ════════════════════ -->
+<div id="page-claude" class="page">
+  <div class="learn-page">
+    <div class="learn-hero">
+      <h1 class="learn-hero-title" style="color: var(--secondary);">Claude Code</h1>
+      <p class="learn-hero-sub">AI-assisted development for embedded systems and hardware projects</p>
+    </div>
+    <div class="learn-layout">
+      <div class="learn-sidebar">
+        <div class="learn-sidebar-title">Lessons</div>
+        <div class="lesson-item active" data-lesson="cc-1" onclick="switchLesson(this, 'cc')">
+          <span class="lesson-num">01</span> Introduction
+        </div>
+        <div class="lesson-item" data-lesson="cc-2" onclick="switchLesson(this, 'cc')">
+          <span class="lesson-num">02</span> Setup &amp; Config
+        </div>
+        <div class="lesson-item" data-lesson="cc-3" onclick="switchLesson(this, 'cc')">
+          <span class="lesson-num">03</span> Prompting for Hardware
+        </div>
+        <div class="lesson-item" data-lesson="cc-4" onclick="switchLesson(this, 'cc')">
+          <span class="lesson-num">04</span> Firmware Generation
+        </div>
+        <div class="lesson-item" data-lesson="cc-5" onclick="switchLesson(this, 'cc')">
+          <span class="lesson-num">05</span> Debugging with Claude
+        </div>
+        <div class="lesson-item" data-lesson="cc-6" onclick="switchLesson(this, 'cc')">
+          <span class="lesson-num">06</span> Advanced Patterns
+        </div>
+      </div>
+      <div class="learn-content">
+        <div class="lesson-content active" id="cc-1">
+          <h2>Introduction to Claude Code</h2>
+          <p>Claude Code is an agentic coding tool that lives in your terminal. Unlike traditional code completion, Claude Code understands your entire project context — files, dependencies, build systems — and can make multi-file changes, run commands, and iterate on errors autonomously.</p>
+          <p>In this workshop, we will use Claude Code as a co-pilot specifically for hardware projects: generating Arduino sketches, debugging sensor readings, writing communication protocols, and designing PCB layouts.</p>
+          <h3>Why Claude Code for Hardware?</h3>
+          <p>Embedded development has unique challenges: limited memory, real-time constraints, hardware-specific APIs, and the gap between documentation and reality. Claude Code bridges this gap by understanding datasheets, suggesting pin configurations, and generating tested firmware patterns.</p>
+          <div class="code-block">
+<span class="comment">// Ask Claude Code to generate sensor reading code</span>
+<span class="keyword">const</span> <span class="func">reading</span> = <span class="keyword">await</span> <span class="func">sensor</span>.<span class="func">read</span>({
+  <span class="func">pin</span>: <span class="string">'A0'</span>,
+  <span class="func">type</span>: <span class="string">'analog'</span>,
+  <span class="func">samples</span>: <span class="number">10</span>,
+  <span class="func">interval</span>: <span class="number">50</span>
+});
+
+<span class="comment">// Claude suggests averaging for noise reduction</span>
+<span class="keyword">const</span> <span class="func">averaged</span> = <span class="func">reading</span>.<span class="func">reduce</span>((<span class="func">a</span>, <span class="func">b</span>) => <span class="func">a</span> + <span class="func">b</span>) / <span class="func">reading</span>.<span class="func">length</span>;
+</div>
+          <p>By the end of this module, you will be comfortable using Claude Code to accelerate every phase of your hardware project — from ideation through deployment.</p>
+        </div>
+        <div class="lesson-content" id="cc-2">
+          <h2>Setup &amp; Configuration</h2>
+          <p>Before diving in, let's get your development environment configured. Claude Code runs in your terminal alongside your existing toolchain.</p>
+          <h3>Installation</h3>
+          <div class="code-block">
+<span class="comment"># Install Claude Code via npm</span>
+<span class="func">npm</span> <span class="func">install</span> <span class="string">-g</span> <span class="string">@anthropic-ai/claude-code</span>
+
+<span class="comment"># Verify installation</span>
+<span class="func">claude</span> <span class="string">--version</span>
+
+<span class="comment"># Authenticate</span>
+<span class="func">claude</span> <span class="string">auth login</span>
+</div>
+          <h3>Project Configuration</h3>
+          <p>Create a <code>.claude</code> directory in your project root to store context and preferences. This helps Claude understand your hardware setup — which board you are using, pin assignments, and library preferences.</p>
+          <div class="code-block">
+<span class="comment"># Initialize Claude Code in your project</span>
+<span class="func">cd</span> <span class="string">~/my-arduino-project</span>
+<span class="func">claude</span> <span class="string">init</span>
+
+<span class="comment"># This creates .claude/ with default config</span>
+<span class="comment"># Edit .claude/settings.json for hardware specifics</span>
+</div>
+          <p>The settings file lets you specify your target board, serial port, and commonly used libraries so Claude can generate compatible code from the start.</p>
+        </div>
+        <div class="lesson-content" id="cc-3">
+          <h2>Prompting for Hardware</h2>
+          <p>Writing effective prompts for hardware projects requires a different approach than web development. You need to specify physical constraints, timing requirements, and electrical characteristics.</p>
+          <h3>The Hardware Prompt Template</h3>
+          <p>A good hardware prompt includes: the board, the component, the communication protocol, and the desired behavior. Be specific about pin numbers and voltage levels.</p>
+          <div class="code-block">
+<span class="comment">// Example prompt structure:</span>
+<span class="comment">// "Using Arduino Nano with BME280 on I2C (SDA=A4, SCL=A5),</span>
+<span class="comment">//  read temperature every 2 seconds, display on</span>
+<span class="comment">//  SSD1306 OLED (same I2C bus, address 0x3C),</span>
+<span class="comment">//  and log to SD card on SPI (CS=10)"</span>
+</div>
+          <p>The more specific you are about your physical setup, the more accurate Claude's generated code will be. Always mention power constraints if running on battery.</p>
+        </div>
+        <div class="lesson-content" id="cc-4">
+          <h2>Firmware Generation</h2>
+          <p>This is where Claude Code truly shines. Rather than piecing together library examples, you describe the behavior you want and Claude generates production-ready firmware.</p>
+          <h3>From Description to Working Code</h3>
+          <div class="code-block">
+<span class="comment">// Claude generates complete, compilable sketches</span>
+<span class="keyword">#include</span> <span class="string">&lt;Wire.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;Adafruit_BME280.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;Adafruit_SSD1306.h&gt;</span>
+
+<span class="keyword">Adafruit_BME280</span> <span class="func">bme</span>;
+<span class="keyword">Adafruit_SSD1306</span> <span class="func">display</span>(<span class="number">128</span>, <span class="number">64</span>, &amp;<span class="func">Wire</span>);
+
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">Wire</span>.<span class="func">begin</span>();
+  <span class="func">bme</span>.<span class="func">begin</span>(<span class="number">0x76</span>);
+  <span class="func">display</span>.<span class="func">begin</span>(<span class="func">SSD1306_SWITCHCAPVCC</span>, <span class="number">0x3C</span>);
+}
+</div>
+          <p>Claude handles library includes, initialization sequences, error checking, and even suggests pull-up resistor values for I2C lines.</p>
+        </div>
+        <div class="lesson-content" id="cc-5">
+          <h2>Debugging with Claude</h2>
+          <p>When your hardware does not behave as expected — and it won't — Claude Code can help diagnose issues from serial output, timing diagrams, and error codes.</p>
+          <h3>Common Debugging Patterns</h3>
+          <p>Share your serial monitor output with Claude. It can identify initialization failures, I2C address conflicts, timing issues, and memory overflows that are common in embedded development.</p>
+          <div class="code-block">
+<span class="comment">// Claude helps add diagnostic output</span>
+<span class="keyword">void</span> <span class="func">diagnoseI2C</span>() {
+  <span class="keyword">for</span> (<span class="keyword">byte</span> <span class="func">addr</span> = <span class="number">1</span>; <span class="func">addr</span> &lt; <span class="number">127</span>; <span class="func">addr</span>++) {
+    <span class="func">Wire</span>.<span class="func">beginTransmission</span>(<span class="func">addr</span>);
+    <span class="keyword">if</span> (<span class="func">Wire</span>.<span class="func">endTransmission</span>() == <span class="number">0</span>) {
+      <span class="func">Serial</span>.<span class="func">print</span>(<span class="string">"Found: 0x"</span>);
+      <span class="func">Serial</span>.<span class="func">println</span>(<span class="func">addr</span>, <span class="func">HEX</span>);
+    }
+  }
+}
+</div>
+        </div>
+        <div class="lesson-content" id="cc-6">
+          <h2>Advanced Patterns</h2>
+          <p>Once you are comfortable with the basics, Claude Code can help you implement more sophisticated patterns: state machines, interrupt-driven architectures, low-power modes, and OTA updates.</p>
+          <h3>State Machine Pattern</h3>
+          <div class="code-block">
+<span class="keyword">enum</span> <span class="func">State</span> { <span class="func">IDLE</span>, <span class="func">READING</span>, <span class="func">DISPLAYING</span>, <span class="func">LOGGING</span>, <span class="func">SLEEPING</span> };
+<span class="keyword">State</span> <span class="func">currentState</span> = <span class="func">IDLE</span>;
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="keyword">switch</span> (<span class="func">currentState</span>) {
+    <span class="keyword">case</span> <span class="func">IDLE</span>:
+      <span class="keyword">if</span> (<span class="func">millis</span>() - <span class="func">lastRead</span> &gt; <span class="func">INTERVAL</span>)
+        <span class="func">currentState</span> = <span class="func">READING</span>;
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="func">READING</span>:
+      <span class="func">readSensors</span>();
+      <span class="func">currentState</span> = <span class="func">DISPLAYING</span>;
+      <span class="keyword">break</span>;
+    <span class="comment">// ... Claude generates the full pattern</span>
+  }
+}
+</div>
+          <p>These patterns make your firmware robust, maintainable, and power-efficient — exactly what you need for real-world hardware deployments.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ ARDUINO PAGE ════════════════════ -->
+<div id="page-arduino" class="page">
+  <div class="learn-page">
+    <div class="learn-hero">
+      <h1 class="learn-hero-title" style="color: var(--secondary);">Arduino</h1>
+      <p class="learn-hero-sub">Physical computing from first blink to sensor networks</p>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-label">Progress &mdash; <span id="arduino-progress-text">Lesson 1 of 8</span></div>
+      <div class="progress-track">
+        <div class="progress-fill" id="arduino-progress" style="width: 12.5%;"></div>
+      </div>
+    </div>
+    <div class="learn-layout">
+      <div class="learn-sidebar" id="arduino-sidebar">
+        <div class="learn-sidebar-title">Lessons</div>
+        <div class="lesson-item active" data-lesson="ar-1" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">01</span> What is Arduino?
+        </div>
+        <div class="lesson-item" data-lesson="ar-2" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">02</span> Blink: Your First Sketch
+        </div>
+        <div class="lesson-item" data-lesson="ar-3" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">03</span> Digital I/O
+        </div>
+        <div class="lesson-item" data-lesson="ar-4" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">04</span> Analog Input
+        </div>
+        <div class="lesson-item" data-lesson="ar-5" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">05</span> Serial Communication
+        </div>
+        <div class="lesson-item" data-lesson="ar-6" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">06</span> Libraries &amp; Sensors
+        </div>
+        <div class="lesson-item" data-lesson="ar-7" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">07</span> I2C &amp; SPI
+        </div>
+        <div class="lesson-item" data-lesson="ar-8" onclick="switchLesson(this, 'ar')">
+          <span class="lesson-num">08</span> Project Integration
+        </div>
+      </div>
+      <div class="learn-content">
+        <div class="lesson-content active" id="ar-1">
+          <h2>What is Arduino?</h2>
+          <p>Arduino is an open-source electronics platform based on easy-to-use hardware and software. At its core, an Arduino board contains a microcontroller — a small computer on a single chip — that you can program to read inputs (a sensor value, a button press) and turn them into outputs (activating a motor, turning on an LED, publishing data online).</p>
+          <p>In this workshop, we will primarily use the <strong>Arduino Nano</strong> — a compact, breadboard-friendly board powered by the ATmega328P. It has 14 digital I/O pins, 8 analog inputs, and communicates over USB serial.</p>
+          <h3>The Arduino Ecosystem</h3>
+          <p>Arduino is more than a board — it is a complete ecosystem: the IDE for writing and uploading code, a massive library collection, a global community, and a philosophy that hardware should be accessible to everyone. Every sketch (Arduino program) has two core functions:</p>
+          <div class="code-block">
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="comment">// Runs once when the board powers on</span>
+  <span class="comment">// Initialize pins, serial, sensors here</span>
+}
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="comment">// Runs repeatedly forever</span>
+  <span class="comment">// Your main program logic goes here</span>
+}
+</div>
+          <p>This structure — initialize, then loop — maps naturally to how physical devices work: start up, then continuously respond to the world.</p>
+        </div>
+        <div class="lesson-content" id="ar-2">
+          <h2>Blink: Your First Sketch</h2>
+          <p>Every Arduino journey starts with Blink. It is the "Hello, World" of physical computing — the simplest proof that your board, your code, and your connection are all working.</p>
+          <h3>The Blink Sketch</h3>
+          <div class="code-block">
+<span class="comment">// Blink — the hardware "Hello, World"</span>
+<span class="comment">// Toggles the built-in LED every second</span>
+
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">pinMode</span>(<span class="func">LED_BUILTIN</span>, <span class="func">OUTPUT</span>);
+}
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="func">digitalWrite</span>(<span class="func">LED_BUILTIN</span>, <span class="func">HIGH</span>);  <span class="comment">// LED on</span>
+  <span class="func">delay</span>(<span class="number">1000</span>);                      <span class="comment">// Wait 1 second</span>
+  <span class="func">digitalWrite</span>(<span class="func">LED_BUILTIN</span>, <span class="func">LOW</span>);   <span class="comment">// LED off</span>
+  <span class="func">delay</span>(<span class="number">1000</span>);                      <span class="comment">// Wait 1 second</span>
+}
+</div>
+          <h3>Breaking it Down</h3>
+          <p><code>pinMode(LED_BUILTIN, OUTPUT)</code> tells the microcontroller that pin 13 (the built-in LED) should be used as an output — meaning we will send voltage out through it, not read voltage from it.</p>
+          <p><code>digitalWrite(LED_BUILTIN, HIGH)</code> sets the pin to 5V, which turns the LED on. <code>LOW</code> sets it to 0V, turning it off. The <code>delay(1000)</code> pauses execution for 1000 milliseconds.</p>
+          <p>Upload this sketch, and you will see the small LED on your Nano blinking steadily. You have just programmed a physical object. Everything else builds from here.</p>
+        </div>
+        <div class="lesson-content" id="ar-3">
+          <h2>Digital I/O</h2>
+          <p>Digital pins deal in absolutes: HIGH (5V) or LOW (0V). They are perfect for buttons, switches, LEDs, and any binary signal. The Arduino Nano has 14 digital pins (D0–D13).</p>
+          <h3>Reading a Button</h3>
+          <div class="code-block">
+<span class="keyword">const int</span> <span class="func">BUTTON_PIN</span> = <span class="number">2</span>;
+<span class="keyword">const int</span> <span class="func">LED_PIN</span> = <span class="number">13</span>;
+
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">pinMode</span>(<span class="func">BUTTON_PIN</span>, <span class="func">INPUT_PULLUP</span>);
+  <span class="func">pinMode</span>(<span class="func">LED_PIN</span>, <span class="func">OUTPUT</span>);
+}
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="keyword">int</span> <span class="func">state</span> = <span class="func">digitalRead</span>(<span class="func">BUTTON_PIN</span>);
+  <span class="func">digitalWrite</span>(<span class="func">LED_PIN</span>, !<span class="func">state</span>);
+}
+</div>
+          <p><code>INPUT_PULLUP</code> activates an internal pull-up resistor, so the pin reads HIGH when the button is not pressed and LOW when it is. This eliminates the need for an external resistor.</p>
+        </div>
+        <div class="lesson-content" id="ar-4">
+          <h2>Analog Input</h2>
+          <p>While digital pins see the world in black and white, analog pins see shades of grey. The Arduino's ADC (Analog-to-Digital Converter) reads voltages between 0V and 5V and maps them to values between 0 and 1023.</p>
+          <h3>Reading a Potentiometer</h3>
+          <div class="code-block">
+<span class="keyword">const int</span> <span class="func">POT_PIN</span> = <span class="func">A0</span>;
+
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">Serial</span>.<span class="func">begin</span>(<span class="number">9600</span>);
+}
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="keyword">int</span> <span class="func">value</span> = <span class="func">analogRead</span>(<span class="func">POT_PIN</span>);
+  <span class="keyword">float</span> <span class="func">voltage</span> = <span class="func">value</span> * (<span class="number">5.0</span> / <span class="number">1023.0</span>);
+  <span class="func">Serial</span>.<span class="func">print</span>(<span class="string">"Voltage: "</span>);
+  <span class="func">Serial</span>.<span class="func">println</span>(<span class="func">voltage</span>);
+  <span class="func">delay</span>(<span class="number">100</span>);
+}
+</div>
+          <p>This is the foundation of sensor reading. Temperature sensors, light sensors, flex sensors — they all produce analog voltages that we convert to meaningful numbers.</p>
+        </div>
+        <div class="lesson-content" id="ar-5">
+          <h2>Serial Communication</h2>
+          <p>Serial is your window into the microcontroller's mind. It lets your Arduino send and receive data over USB, which is invaluable for debugging and data logging.</p>
+          <div class="code-block">
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">Serial</span>.<span class="func">begin</span>(<span class="number">115200</span>);  <span class="comment">// Fast baud rate</span>
+  <span class="func">Serial</span>.<span class="func">println</span>(<span class="string">"System initialized"</span>);
+}
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="keyword">if</span> (<span class="func">Serial</span>.<span class="func">available</span>()) {
+    <span class="keyword">char</span> <span class="func">cmd</span> = <span class="func">Serial</span>.<span class="func">read</span>();
+    <span class="func">processCommand</span>(<span class="func">cmd</span>);
+  }
+}
+</div>
+          <p>The Serial Monitor in the Arduino IDE (or any terminal emulator) displays this output in real-time. You can also send commands back to the Arduino.</p>
+        </div>
+        <div class="lesson-content" id="ar-6">
+          <h2>Libraries &amp; Sensors</h2>
+          <p>Arduino's power comes from its library ecosystem. Instead of writing low-level I2C commands to talk to a temperature sensor, you install a library and call <code>bme.readTemperature()</code>.</p>
+          <h3>Using the BME280</h3>
+          <div class="code-block">
+<span class="keyword">#include</span> <span class="string">&lt;Adafruit_BME280.h&gt;</span>
+
+<span class="keyword">Adafruit_BME280</span> <span class="func">bme</span>;
+
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">Serial</span>.<span class="func">begin</span>(<span class="number">9600</span>);
+  <span class="keyword">if</span> (!<span class="func">bme</span>.<span class="func">begin</span>(<span class="number">0x76</span>)) {
+    <span class="func">Serial</span>.<span class="func">println</span>(<span class="string">"BME280 not found!"</span>);
+    <span class="keyword">while</span>(<span class="number">1</span>);
+  }
+}
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="func">Serial</span>.<span class="func">print</span>(<span class="func">bme</span>.<span class="func">readTemperature</span>());
+  <span class="func">Serial</span>.<span class="func">println</span>(<span class="string">" C"</span>);
+  <span class="func">delay</span>(<span class="number">2000</span>);
+}
+</div>
+        </div>
+        <div class="lesson-content" id="ar-7">
+          <h2>I2C &amp; SPI</h2>
+          <p>These are the two most common communication protocols in the embedded world. I2C uses two wires (SDA, SCL) and supports multiple devices on a single bus. SPI uses four wires but is faster, making it ideal for displays and SD cards.</p>
+          <div class="code-block">
+<span class="comment">// I2C Scanner — find all devices on the bus</span>
+<span class="keyword">#include</span> <span class="string">&lt;Wire.h&gt;</span>
+
+<span class="keyword">void</span> <span class="func">setup</span>() {
+  <span class="func">Wire</span>.<span class="func">begin</span>();
+  <span class="func">Serial</span>.<span class="func">begin</span>(<span class="number">9600</span>);
+
+  <span class="keyword">for</span> (<span class="keyword">byte</span> <span class="func">addr</span> = <span class="number">1</span>; <span class="func">addr</span> &lt; <span class="number">127</span>; <span class="func">addr</span>++) {
+    <span class="func">Wire</span>.<span class="func">beginTransmission</span>(<span class="func">addr</span>);
+    <span class="keyword">if</span> (<span class="func">Wire</span>.<span class="func">endTransmission</span>() == <span class="number">0</span>) {
+      <span class="func">Serial</span>.<span class="func">print</span>(<span class="string">"Device at 0x"</span>);
+      <span class="func">Serial</span>.<span class="func">println</span>(<span class="func">addr</span>, <span class="func">HEX</span>);
+    }
+  }
+}
+</div>
+        </div>
+        <div class="lesson-content" id="ar-8">
+          <h2>Project Integration</h2>
+          <p>Now we bring it all together. A real project combines multiple sensors, displays, storage, and communication — all running concurrently on a tiny microcontroller.</p>
+          <h3>Architecture Pattern</h3>
+          <p>Use a task-based approach instead of blocking delays. This lets your firmware handle multiple responsibilities without missing sensor readings or user inputs.</p>
+          <div class="code-block">
+<span class="keyword">unsigned long</span> <span class="func">lastSensorRead</span> = <span class="number">0</span>;
+<span class="keyword">unsigned long</span> <span class="func">lastDisplayUpdate</span> = <span class="number">0</span>;
+
+<span class="keyword">void</span> <span class="func">loop</span>() {
+  <span class="keyword">unsigned long</span> <span class="func">now</span> = <span class="func">millis</span>();
+
+  <span class="keyword">if</span> (<span class="func">now</span> - <span class="func">lastSensorRead</span> &gt; <span class="number">2000</span>) {
+    <span class="func">readSensors</span>();
+    <span class="func">lastSensorRead</span> = <span class="func">now</span>;
+  }
+
+  <span class="keyword">if</span> (<span class="func">now</span> - <span class="func">lastDisplayUpdate</span> &gt; <span class="number">500</span>) {
+    <span class="func">updateDisplay</span>();
+    <span class="func">lastDisplayUpdate</span> = <span class="func">now</span>;
+  }
+}
+</div>
+          <p>This non-blocking pattern is essential for the projects you will build in the workshop. Your Weather Station, for example, needs to read sensors, update the display, and log to the SD card — all appearing to happen simultaneously.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ PROJECTS PAGE ════════════════════ -->
+<div id="page-projects" class="page">
+  <div class="learn-page">
+    <div class="learn-hero">
+      <h1 class="learn-hero-title" style="color: var(--accent);">Projects</h1>
+      <p class="learn-hero-sub">Three take-home builds combining Claude Code, Arduino, and electronics</p>
+    </div>
+    <div class="section-wrap">
+      <div class="projects-page-cards">
+
+        <!-- Weather Station -->
+        <div class="project-full reveal">
+          <div class="project-full-top">
+            <div class="project-full-ascii" style="color: var(--primary);">
+    ┌───────────────────┐
+    │   ╔═════════════╗ │
+    │   ║  WEATHER    ║ │
+    │   ║  72.4°F     ║ │
+    │   ║  45% RH     ║ │
+    │   ║  1013 hPa   ║ │
+    │   ╚═════════════╝ │
+    │                   │
+    │  ◉ BME280  [SD]   │
+    │  ◎ LDR     [USB]  │
+    └───────────────────┘</div>
+            <div class="project-full-info">
+              <div class="project-full-name">Weather Station</div>
+              <p class="project-full-desc">A desktop weather station with OLED display, environmental sensing, ambient light detection, and SD card data logging. Firmware generated and refined using Claude Code.</p>
+              <div class="parts-title">Parts List</div>
+              <div class="parts-list">
+                ├── Arduino Nano (ATmega328P)<br>
+                ├── BME280 Temperature/Humidity/Pressure<br>
+                ├── SSD1306 OLED Display (128x64, I2C)<br>
+                ├── LDR (Light Dependent Resistor)<br>
+                ├── MicroSD Card Module (SPI)<br>
+                ├── 10k&Omega; Resistor (LDR divider)<br>
+                └── Custom 3D-printed enclosure
+              </div>
+            </div>
+          </div>
+          <div class="learn-list">
+            <div class="learn-list-title">What You'll Learn</div>
+            <ul>
+              <li>I2C communication with multiple devices</li>
+              <li>SPI interface for SD card logging</li>
+              <li>Analog sensor reading and calibration</li>
+              <li>OLED display graphics and layout</li>
+              <li>Non-blocking multi-task firmware</li>
+              <li>Claude Code for firmware generation</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- MIDI Controller -->
+        <div class="project-full reveal">
+          <div class="project-full-top">
+            <div class="project-full-ascii" style="color: var(--secondary);">
+    ┌──────────────────────┐
+    │  ♩ MIDI CTRL  v1.0   │
+    │                      │
+    │  [◎] [◎] [◎] [◎]    │
+    │                      │
+    │  ┌──┬──┬──┬──┐       │
+    │  │▓▓│▓▓│▓▓│▓▓│       │
+    │  ├──┼──┼──┼──┤       │
+    │  │▓▓│▓▓│▓▓│▓▓│       │
+    │  └──┴──┴──┴──┘       │
+    │         [USB-C]      │
+    └──────────────────────┘</div>
+            <div class="project-full-info">
+              <div class="project-full-name">MIDI Controller</div>
+              <p class="project-full-desc">An 8-pad, 4-knob MIDI controller with velocity-sensitive input and USB-MIDI output. Features a custom PCB with exposed copper pour aesthetic and Cherry MX-compatible pad mounts.</p>
+              <div class="parts-title">Parts List</div>
+              <div class="parts-list">
+                ├── Teensy 4.0 (USB-MIDI native)<br>
+                ├── 8x FSR (Force Sensitive Resistors)<br>
+                ├── 4x Rotary Encoders (w/ push button)<br>
+                ├── 8x WS2812B LEDs (pad backlighting)<br>
+                ├── Custom PCB (2-layer, HASL finish)<br>
+                ├── 3D-printed enclosure (walnut PLA)<br>
+                └── USB-C breakout board
+              </div>
+            </div>
+          </div>
+          <div class="learn-list">
+            <div class="learn-list-title">What You'll Learn</div>
+            <ul>
+              <li>USB-MIDI protocol implementation</li>
+              <li>Force-sensitive resistor calibration</li>
+              <li>Rotary encoder state machines</li>
+              <li>Addressable LED control (WS2812B)</li>
+              <li>PCB design basics with KiCad</li>
+              <li>Velocity curve mapping and MIDI CC</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- LED Installation -->
+        <div class="project-full reveal">
+          <div class="project-full-top">
+            <div class="project-full-ascii" style="color: var(--accent);">
+    ◆ ── ── ── ◇ ── ── ── ◆
+    │                     │
+    │    ✦  ✦  ✦  ✦  ✦    │
+    │   ✦  ✦  ✦  ✦  ✦  ✦  │
+    ◇  ✦  ✦  ✦  ✦  ✦  ✦  ◇
+    │   ✦  ✦  ✦  ✦  ✦  ✦  │
+    │    ✦  ✦  ✦  ✦  ✦    │
+    │                     │
+    ◆ ── ── ── ◇ ── ── ── ◆
+    │    [ESP32]  [MIC]   │</div>
+            <div class="project-full-info">
+              <div class="project-full-name">LED Installation</div>
+              <p class="project-full-desc">A wall-mounted LED matrix art piece with sound-reactive patterns. Uses MEMS microphone with FFT analysis for real-time audio visualization, plus ambient modes driven by perlin noise.</p>
+              <div class="parts-title">Parts List</div>
+              <div class="parts-list">
+                ├── ESP32 DevKit (WiFi + BLE)<br>
+                ├── WS2812B LED Strip (144/m, 2m)<br>
+                ├── INMP441 MEMS Microphone (I2S)<br>
+                ├── 5V 10A Power Supply<br>
+                ├── 1000&micro;F Capacitor (power filtering)<br>
+                ├── 470&Omega; Resistor (data line)<br>
+                └── Laser-cut acrylic diffuser panel
+              </div>
+            </div>
+          </div>
+          <div class="learn-list">
+            <div class="learn-list-title">What You'll Learn</div>
+            <ul>
+              <li>ESP32 WiFi and BLE configuration</li>
+              <li>FFT (Fast Fourier Transform) basics</li>
+              <li>I2S digital audio interface</li>
+              <li>Addressable LED matrix mapping</li>
+              <li>Power supply sizing and safety</li>
+              <li>Perlin noise for organic animations</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ JAVASCRIPT ════════════════════ -->
+<script>
+// ── PAGE SWITCHING ──
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.nav-tab[data-page="' + page + '"]').classList.add('active');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Re-trigger reveal for newly visible elements
+  setTimeout(() => {
+    document.querySelectorAll('.page.active .reveal').forEach(el => {
+      observer.observe(el);
+    });
+  }, 100);
+}
+
+// ── LESSON SWITCHING ──
+function switchLesson(el, prefix) {
+  const sidebar = el.closest('.learn-sidebar');
+  sidebar.querySelectorAll('.lesson-item').forEach(item => item.classList.remove('active'));
+  el.classList.add('active');
+
+  const lessonId = el.getAttribute('data-lesson');
+  const page = el.closest('.learn-layout');
+  page.querySelectorAll('.lesson-content').forEach(lc => lc.classList.remove('active'));
+  document.getElementById(lessonId).classList.add('active');
+
+  // Update progress for Arduino page
+  if (prefix === 'ar') {
+    const items = sidebar.querySelectorAll('.lesson-item');
+    let index = 0;
+    items.forEach((item, i) => { if (item === el) index = i; });
+    const pct = ((index + 1) / items.length) * 100;
+    document.getElementById('arduino-progress').style.width = pct + '%';
+    document.getElementById('arduino-progress-text').textContent = 'Lesson ' + (index + 1) + ' of ' + items.length;
+  }
+}
+
+// ── COUNTDOWN TIMER ──
+(function() {
+  let totalSeconds = (127 * 86400) + (14 * 3600) + (32 * 60);
+
+  function updateCountdown() {
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('countdown').textContent =
+      days + ':' + pad(hours) + ':' + pad(mins) + ':' + pad(secs);
+
+    if (totalSeconds > 0) totalSeconds--;
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+})();
+
+// ── STEP SEQUENCER ──
+(function() {
+  const seq = document.getElementById('sequencer');
+  const leds = seq.querySelectorAll('.seq-led');
+  let current = 0;
+
+  setInterval(() => {
+    leds[current].classList.remove('active');
+    current = (current + 1) % leds.length;
+    leds[current].classList.add('active');
+  }, 500);
+})();
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -40px 0px'
+});
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── EMAIL INPUT INTERACTION ──
+document.querySelector('.email-btn').addEventListener('click', function() {
+  const input = document.querySelector('.email-input');
+  if (input.value && input.value.includes('@')) {
+    this.textContent = 'SENT!';
+    this.style.background = 'var(--secondary)';
+    input.value = '';
+    setTimeout(() => {
+      this.textContent = 'Notify Me';
+      this.style.background = 'var(--primary)';
+    }, 2000);
+  } else {
+    input.style.borderColor = 'var(--accent)';
+    input.style.boxShadow = '0 0 0 3px rgba(184,115,51,0.2)';
+    setTimeout(() => {
+      input.style.borderColor = 'var(--border)';
+      input.style.boxShadow = 'none';
+    }, 1500);
+  }
+});
+</script>
+</body>
+</html>

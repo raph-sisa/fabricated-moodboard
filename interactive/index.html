@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Moodboard Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #D4A55A;
+    --secondary: #5A8A8A;
+    --accent: #B87333;
+    --bg: #0D0D0D;
+    --surface: #1A1A18;
+    --text: #E8E4DC;
+    --text-2: #8F837A;
+    --text-3: #5A5650;
+    --border: #2A2A27;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+  }
+  h1 {
+    font-family: 'VT323', monospace;
+    font-size: 3rem;
+    color: var(--primary);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 30px rgba(212,165,90,0.15);
+    margin-bottom: 0.5rem;
+  }
+  .subtitle {
+    font-size: 0.7rem;
+    color: var(--text-3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 960px;
+    width: 100%;
+  }
+  .option {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .option:hover {
+    border-color: rgba(212,165,90,0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .option::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 6px 6px 0 0;
+  }
+  .option-a::before { background: var(--primary); }
+  .option-c::before { background: var(--secondary); }
+  .option-h::before { background: var(--accent); }
+  .option-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  .dot-amber { background: var(--primary); box-shadow: 0 0 4px var(--primary); }
+  .dot-teal { background: var(--secondary); box-shadow: 0 0 4px var(--secondary); }
+  .dot-copper { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.35} }
+  .option h2 {
+    font-family: 'VT323', monospace;
+    font-size: 1.8rem;
+    margin-bottom: 0.75rem;
+  }
+  .option p {
+    font-size: 0.68rem;
+    color: var(--text-2);
+    line-height: 1.75;
+    margin-bottom: 1.5rem;
+  }
+  .option-cta {
+    font-size: 0.6rem;
+    color: var(--primary);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+  <h1>FABRICATED</h1>
+  <p class="subtitle">Moodboard &mdash; Interactive Prototypes</p>
+  <div class="options">
+    <a href="option-a.html" class="option option-a">
+      <div class="option-label"><span class="dot dot-amber"></span> Option A</div>
+      <h2>Light Terminal</h2>
+      <p>Polished visual site with Korg-inspired panels, learning modules, project pages, and workshop details. Beautiful and accessible.</p>
+      <span class="option-cta">Open &rarr;</span>
+    </a>
+    <a href="option-c.html" class="option option-c">
+      <div class="option-label"><span class="dot dot-teal"></span> Option C</div>
+      <h2>Full Terminal</h2>
+      <p>The entire site is an interactive terminal. Type commands to navigate, learn, sign up, and switch themes. Power-user immersion.</p>
+      <span class="option-cta">Open &rarr;</span>
+    </a>
+    <a href="option-hybrid.html" class="option option-h">
+      <div class="option-label"><span class="dot dot-copper"></span> Hybrid</div>
+      <h2>Visual + Terminal</h2>
+      <p>The visual site with a terminal drawer at the bottom. Press backtick to toggle. Both interfaces control the same site.</p>
+      <span class="option-cta">Open &rarr;</span>
+    </a>
+  </div>
+</body>
+</html>

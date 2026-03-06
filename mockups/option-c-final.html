@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabricated — Option C Final: Full Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #D4A55A;
+    --primary-dim: rgba(212,165,90,0.12);
+    --secondary: #5A8A8A;
+    --accent: #B87333;
+    --bg: #060604;
+    --surface: #0e0e0c;
+    --surface-2: #141412;
+    --text: #E8E4DC;
+    --text-2: #8F837A;
+    --text-3: #5A5650;
+    --text-4: #3A3835;
+    --border: #1E1E1C;
+    --border-dim: #161614;
+    --success: #6ACD6A;
+  }
+
+  body {
+    background: #020201;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+  }
+
+  /* Ambient background glow behind terminal */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(212,165,90,0.015) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === TERMINAL FRAME === */
+  .terminal {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 960px;
+    min-height: calc(100vh - 2.5rem);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 30px 100px rgba(0,0,0,0.7),
+      0 0 1px rgba(212,165,90,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.02);
+    background: var(--bg);
+  }
+
+  /* Title bar */
+  .titlebar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .titlebar-dots { display: flex; gap: 7px; }
+
+  .tdot { width: 12px; height: 12px; border-radius: 50%; }
+  .tdot-r { background: #FF5F57; }
+  .tdot-y { background: #FFBD2E; }
+  .tdot-g { background: #28C840; }
+
+  .titlebar-center {
+    font-size: 0.6rem;
+    color: var(--text-3);
+    letter-spacing: 0.08em;
+  }
+
+  .titlebar-theme {
+    font-size: 0.5rem;
+    color: var(--text-4);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+
+  .theme-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 4px rgba(212,165,90,0.3);
+  }
+
+  /* Tab bar */
+  .tabbar {
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    height: 30px;
+    flex-shrink: 0;
+  }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.85rem;
+    font-size: 0.55rem;
+    color: var(--text-4);
+    border-right: 1px solid var(--border-dim);
+    cursor: pointer;
+    transition: color 0.2s;
+    position: relative;
+  }
+
+  .tab:hover { color: var(--text-3); }
+
+  .tab.active {
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary);
+  }
+
+  .tab-dot { width: 4px; height: 4px; border-radius: 50%; }
+  .tab-dot-amber { background: var(--primary); box-shadow: 0 0 3px var(--primary); }
+  .tab-dot-teal { background: var(--secondary); box-shadow: 0 0 3px var(--secondary); }
+  .tab-dot-copper { background: var(--accent); box-shadow: 0 0 3px var(--accent); }
+  .tab-dot-off { background: var(--text-4); }
+
+  /* Body */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.76rem;
+    line-height: 1.7;
+  }
+
+  .screen {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .screen:last-child { border-bottom: none; }
+
+  .screen-label {
+    font-size: 0.45rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .screen-dot { width: 3px; height: 3px; border-radius: 50%; }
+
+  .ln { margin-bottom: 0.08rem; white-space: pre-wrap; }
+  .blank { height: 0.55rem; }
+
+  .prompt { color: var(--secondary); }
+  .cmd { color: var(--text); font-weight: 500; }
+  .out { color: var(--text-2); }
+  .hi { color: var(--primary); }
+  .teal { color: var(--secondary); }
+  .copper { color: var(--accent); }
+  .dm { color: var(--text-3); }
+  .dm2 { color: var(--text-4); }
+  .bold { font-weight: 600; color: var(--text); }
+  .ok { color: var(--success); }
+
+  /* ASCII */
+  .ascii {
+    font-size: 0.55rem;
+    line-height: 1.1;
+    color: var(--primary);
+    opacity: 0.8;
+  }
+
+  .ascii-teal {
+    color: var(--secondary);
+    opacity: 0.65;
+  }
+
+  /* Boxes */
+  .box {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    overflow: hidden;
+  }
+
+  .box-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0.4rem 0.85rem;
+    font-size: 0.45rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .box-body { padding: 0.85rem; }
+
+  /* Table */
+  .tbl-row { display: flex; margin-bottom: 0.1rem; }
+  .tbl-key { width: 140px; color: var(--text-3); flex-shrink: 0; }
+  .tbl-val { color: var(--text); }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin: 0.5rem 0;
+  }
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+
+  .card:hover { border-color: rgba(212,165,90,0.25); }
+
+  .card-top {
+    background: #000;
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--border-dim);
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-bottom { padding: 0.75rem 0.85rem; }
+
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .card-desc {
+    font-size: 0.6rem;
+    color: var(--text-3);
+    line-height: 1.5;
+  }
+
+  .card-tag {
+    font-size: 0.45rem;
+    color: var(--text-4);
+    border: 1px solid var(--border-dim);
+    padding: 0.08rem 0.35rem;
+    border-radius: 2px;
+    margin-left: auto;
+  }
+
+  .card-ascii {
+    font-size: 0.45rem;
+    line-height: 1.1;
+    text-align: center;
+    opacity: 0.5;
+  }
+
+  /* Progress */
+  .progress { display: flex; align-items: center; gap: 0.6rem; margin: 0.25rem 0; }
+  .progress-label { font-size: 0.6rem; color: var(--text-3); width: 100px; }
+  .progress-track { width: 180px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); border-radius: 2px; }
+  .progress-pct { font-size: 0.6rem; color: var(--text-3); }
+
+  /* Waveform (rendered in OLED-style box) */
+  .oled-inset {
+    background: #000;
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    padding: 0.6rem 0.85rem;
+    margin: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .oled-title {
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    color: var(--primary);
+    text-shadow: 0 0 6px rgba(212,165,90,0.4);
+    letter-spacing: 0.1em;
+  }
+
+  /* Interactive select */
+  .select-list { margin: 0.3rem 0; }
+
+  .select-item {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .select-item.active {
+    background: var(--primary-dim);
+    color: var(--primary);
+  }
+
+  .select-item .arrow { color: var(--primary); }
+
+  /* Theme selector */
+  .themes { display: flex; gap: 0.5rem; margin: 0.3rem 0; flex-wrap: wrap; }
+
+  .theme-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 0.6rem;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .theme-btn:hover { border-color: var(--text-3); }
+  .theme-btn.active { border-color: var(--primary); background: var(--primary-dim); color: var(--primary); }
+
+  .theme-circle { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Cursor */
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--primary);
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.35} }
+
+  /* Status bar */
+  .statusbar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 0.3rem 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.5rem;
+    color: var(--text-4);
+    flex-shrink: 0;
+  }
+
+  .statusbar-left, .statusbar-right { display: flex; align-items: center; gap: 1.25rem; }
+
+  .status-item { display: flex; align-items: center; gap: 0.3rem; }
+
+  .status-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  .status-dot-amber { background: var(--primary); box-shadow: 0 0 3px var(--primary); }
+  .status-dot-teal { background: var(--secondary); box-shadow: 0 0 3px var(--secondary); }
+
+  /* Separator */
+  .sep { color: var(--text-4); opacity: 0.2; }
+
+  /* Help grid */
+  .help-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .help-group {
+    border: 1px solid var(--border-dim);
+    border-radius: 3px;
+    padding: 0.75rem;
+  }
+
+  .help-group-title {
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .help-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.15rem;
+  }
+
+  .help-cmd { color: var(--primary); font-size: 0.68rem; }
+  .help-desc { color: var(--text-3); font-size: 0.6rem; text-align: right; }
+</style>
+</head>
+<body>
+
+  <div class="terminal">
+
+    <!-- TITLE BAR -->
+    <div class="titlebar">
+      <div class="titlebar-dots">
+        <div class="tdot tdot-r"></div>
+        <div class="tdot tdot-y"></div>
+        <div class="tdot tdot-g"></div>
+      </div>
+      <span class="titlebar-center">fabricated &mdash; zsh &mdash; 108x62</span>
+      <div class="titlebar-theme">
+        <div class="theme-dot"></div>
+        amber
+      </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <div class="tabbar">
+      <div class="tab active">
+        <span class="tab-dot tab-dot-amber"></span>
+        home
+      </div>
+      <div class="tab">
+        <span class="tab-dot tab-dot-teal"></span>
+        learn: arduino
+      </div>
+      <div class="tab">
+        <span class="tab-dot tab-dot-copper"></span>
+        projects: midi
+      </div>
+      <div class="tab">
+        <span class="tab-dot tab-dot-off"></span>
+        +
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+
+      <!-- WELCOME -->
+      <div class="screen">
+        <div class="screen-label">
+          <span class="screen-dot" style="background:var(--primary);box-shadow:0 0 3px var(--primary);"></span>
+          Welcome
+        </div>
+
+        <div class="ln"><span class="dm2">Last login: Thu Mar  5 09:42:01 on ttys001</span></div>
+        <div class="blank"></div>
+
+        <pre class="ascii">
+  ███████╗ █████╗ ██████╗ ██████╗ ██╗ ██████╗ █████╗ ████████╗███████╗██████╗
+  ██╔════╝██╔══██╗██╔══██╗██╔══██╗██║██╔════╝██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
+  █████╗  ███████║██████╔╝██████╔╝██║██║     ███████║   ██║   █████╗  ██║  ██║
+  ██╔══╝  ██╔══██║██╔══██╗██╔══██╗██║██║     ██╔══██║   ██║   ██╔══╝  ██║  ██║
+  ██║     ██║  ██║██████╔╝██║  ██║██║╚██████╗██║  ██║   ██║   ███████╗██████╔╝
+  ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═════╝</pre>
+
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Hardware Build Series &mdash; Long Beach, CA &mdash; Summer 2026</span></div>
+        <div class="blank"></div>
+
+        <div class="oled-inset">
+          <svg viewBox="0 0 400 35" style="width:100%;height:35px;">
+            <path d="M0 17 Q7 4 14 17 Q21 30 28 17 Q35 4 42 17 Q49 30 56 17 Q63 4 70 17 Q77 30 84 17 Q91 4 98 17 Q105 30 112 17 Q119 4 126 17 Q133 30 140 17 Q147 4 154 17 Q161 30 168 17 Q175 4 182 17 Q189 30 196 17 Q203 4 210 17 Q217 30 224 17 Q231 4 238 17 Q245 30 252 17 Q259 4 266 17 Q273 30 280 17 Q287 4 294 17 Q301 30 308 17 Q315 4 322 17 Q329 30 336 17 Q343 4 350 17 Q357 30 364 17 Q371 4 378 17 Q385 30 392 17 Q399 4 400 17"
+              fill="none" stroke="#D4A55A" stroke-width="1.2" opacity="0.6"/>
+            <path d="M0 17 Q10 10 20 17 Q30 24 40 17 Q50 10 60 17 Q70 24 80 17 Q90 10 100 17 Q110 24 120 17 Q130 10 140 17 Q150 24 160 17 Q170 10 180 17 Q190 24 200 17 Q210 10 220 17 Q230 24 240 17 Q250 10 260 17 Q270 24 280 17 Q290 10 300 17 Q310 24 320 17 Q330 10 340 17 Q350 24 360 17 Q370 10 380 17 Q390 24 400 17"
+              fill="none" stroke="#5A8A8A" stroke-width="0.8" opacity="0.3"/>
+          </svg>
+          <span class="oled-title">FABRICATED &mdash; SIGNAL ACTIVE</span>
+        </div>
+
+        <div class="ln"><span class="dm">  Type </span><span class="hi">help</span><span class="dm"> to explore, or start with </span><span class="teal">about</span><span class="dm">.</span></div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="screen">
+        <div class="screen-label">
+          <span class="screen-dot" style="background:var(--primary);box-shadow:0 0 3px var(--primary);"></span>
+          about
+        </div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">about</span></div>
+        <div class="blank"></div>
+
+        <div class="box">
+          <div class="box-header">
+            <span class="screen-dot" style="background:var(--primary);box-shadow:0 0 3px var(--primary);"></span>
+            Workshop Details
+          </div>
+          <div class="box-body">
+            <div class="tbl-row"><span class="tbl-key">  What</span><span class="tbl-val">Hands-on hardware build workshop</span></div>
+            <div class="tbl-row"><span class="tbl-key">  Where</span><span class="tbl-val"><span class="hi">Long Beach, CA</span></span></div>
+            <div class="tbl-row"><span class="tbl-key">  When</span><span class="tbl-val"><span class="hi">Summer 2026</span></span></div>
+            <div class="tbl-row"><span class="tbl-key">  Status</span><span class="tbl-val"><span class="ok">&#9679; Registering</span></span></div>
+            <div class="tbl-row"><span class="tbl-key">  AI Partner</span><span class="tbl-val">Claude Code (Anthropic)</span></div>
+            <div class="tbl-row"><span class="tbl-key">  Hardware</span><span class="tbl-val">Arduino-based projects</span></div>
+            <div class="tbl-row"><span class="tbl-key">  Take Home</span><span class="tbl-val">Everything you build</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECTS with visual cards -->
+      <div class="screen">
+        <div class="screen-label">
+          <span class="screen-dot" style="background:var(--accent);box-shadow:0 0 3px var(--accent);"></span>
+          projects
+        </div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">projects</span></div>
+        <div class="blank"></div>
+
+        <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div class="card">
+            <div class="card-top">
+              <pre class="card-ascii" style="color:var(--primary);">┌───────────┐
+│ ╔══╗ TEMP │
+│ ║  ║23.4° │
+│ ╚══╝ HUM  │
+│ [SD]67.2% │
+└───────────┘</pre>
+            </div>
+            <div class="card-bottom">
+              <div class="card-title"><span class="hi">01</span> Weather Station <span class="card-tag">beginner</span></div>
+              <div class="card-desc">Temp + humidity + OLED display. Data logging. Battery powered.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <pre class="card-ascii" style="color:var(--secondary);">┌───────────┐
+│ ◉F  ◉R  ◉V│
+│            │
+│ [1][2][3]  │
+│ ◉A  ◉D ┌──┤
+│ [4][5] │USB│
+└────────┴──┘</pre>
+            </div>
+            <div class="card-bottom">
+              <div class="card-title"><span class="teal">02</span> MIDI Controller <span class="card-tag">intermediate</span></div>
+              <div class="card-desc">Knobs + buttons → USB-MIDI. Custom layout. Any DAW.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <pre class="card-ascii" style="color:var(--accent);">┌───────────┐
+│░▒▓█▓▒░░▒▓│
+│▓▒░░▒▓█▓▒░│
+│░▒▓█▓▒░░▒▓│
+│           │
+│ [MIC]→[MCU]│
+└───────────┘</pre>
+            </div>
+            <div class="card-bottom">
+              <div class="card-title"><span class="copper">03</span> LED Installation <span class="card-tag">intermediate</span></div>
+              <div class="card-desc">Addressable LEDs. Sound-reactive. 3D-printed enclosure.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="blank"></div>
+        <div class="ln"><span class="dm">  Click a card or type </span><span class="teal">projects &lt;name&gt;</span><span class="dm"> for parts list, wiring, and build guide.</span></div>
+      </div>
+
+      <!-- LEARN -->
+      <div class="screen">
+        <div class="screen-label">
+          <span class="screen-dot" style="background:var(--secondary);box-shadow:0 0 3px var(--secondary);"></span>
+          learn arduino --lesson 1
+        </div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">learn arduino --lesson 1</span></div>
+        <div class="blank"></div>
+
+        <div class="box">
+          <div class="box-header">
+            <span class="screen-dot" style="background:var(--secondary);box-shadow:0 0 3px var(--secondary);"></span>
+            Module 02 &mdash; Arduino &mdash; Lesson 01
+          </div>
+          <div class="box-body">
+            <div class="ln"><span class="bold">  What is Arduino?</span></div>
+            <div class="blank"></div>
+            <div class="ln"><span class="out">  Arduino is an open-source electronics platform based on</span></div>
+            <div class="ln"><span class="out">  easy-to-use hardware and software. At its heart is a small</span></div>
+            <div class="ln"><span class="out">  computer called a </span><span class="hi">microcontroller</span><span class="out"> &mdash; a chip that reads</span></div>
+            <div class="ln"><span class="out">  inputs and turns them into outputs.</span></div>
+            <div class="blank"></div>
+            <div class="ln"><span class="out">  Unlike your laptop, a microcontroller runs </span><span class="hi">one program</span></div>
+            <div class="ln"><span class="hi">  at a time</span><span class="out">, in a loop, forever. Perfect for dedicated tasks.</span></div>
+            <div class="blank"></div>
+            <div class="ln"><span class="dm">  // Your first sketch &mdash; "Blink"</span></div>
+            <div class="ln"><span class="teal">  void</span> <span class="hi">setup</span><span class="out">() {</span></div>
+            <div class="ln"><span class="out">    </span><span class="hi">pinMode</span><span class="out">(LED_BUILTIN, </span><span class="copper">OUTPUT</span><span class="out">);</span></div>
+            <div class="ln"><span class="out">  }</span></div>
+            <div class="blank"></div>
+            <div class="ln"><span class="teal">  void</span> <span class="hi">loop</span><span class="out">() {</span></div>
+            <div class="ln"><span class="out">    </span><span class="hi">digitalWrite</span><span class="out">(LED_BUILTIN, </span><span class="copper">HIGH</span><span class="out">); </span><span class="dm">// on</span></div>
+            <div class="ln"><span class="out">    </span><span class="hi">delay</span><span class="out">(</span><span class="copper">1000</span><span class="out">);                    </span><span class="dm">// 1s</span></div>
+            <div class="ln"><span class="out">    </span><span class="hi">digitalWrite</span><span class="out">(LED_BUILTIN, </span><span class="copper">LOW</span><span class="out">);  </span><span class="dm">// off</span></div>
+            <div class="ln"><span class="out">    </span><span class="hi">delay</span><span class="out">(</span><span class="copper">1000</span><span class="out">);                    </span><span class="dm">// 1s</span></div>
+            <div class="ln"><span class="out">  }</span></div>
+          </div>
+        </div>
+
+        <div class="progress">
+          <span class="progress-label">  Lesson 1/8</span>
+          <div class="progress-track"><div class="progress-fill" style="width:12.5%"></div></div>
+          <span class="progress-pct">12%</span>
+        </div>
+        <div class="ln"><span class="dm">  </span><span class="teal">--next</span><span class="dm"> to continue &middot; </span><span class="teal">--list</span><span class="dm"> for all lessons &middot; </span><span class="teal">--quiz</span><span class="dm"> to test yourself</span></div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div class="screen">
+        <div class="screen-label">
+          <span class="screen-dot" style="background:var(--primary);box-shadow:0 0 3px var(--primary);animation:pulse 2.5s ease-in-out infinite;"></span>
+          signup
+        </div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">signup</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="out">  Get notified when registration opens.</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="teal">  Email: </span><span class="cmd">maker@example.com</span></div>
+        <div class="ln"><span class="teal">  Name:  </span><span class="cmd">Alex Chen</span></div>
+        <div class="blank"></div>
+        <div class="ln"><span class="teal">  Interested in:</span></div>
+        <div class="select-list">
+          <div class="select-item active"><span class="arrow">&#10095;</span> <span class="hi">MIDI Controller</span></div>
+          <div class="select-item"><span style="width:0.6rem;display:inline-block"></span> Weather Station</div>
+          <div class="select-item"><span style="width:0.6rem;display:inline-block"></span> LED Installation</div>
+          <div class="select-item"><span style="width:0.6rem;display:inline-block"></span> All of them</div>
+        </div>
+        <div class="blank"></div>
+        <div class="ln"><span class="ok">  &#10003; You're on the list, Alex. We'll email you when it's time.</span></div>
+      </div>
+
+      <!-- THEME + HELP -->
+      <div class="screen">
+        <div class="screen-label">
+          <span class="screen-dot" style="background:var(--text-3);"></span>
+          theme &amp; help
+        </div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">theme</span></div>
+        <div class="blank"></div>
+
+        <div class="themes">
+          <div class="theme-btn active"><div class="theme-circle" style="background:#D4A55A;box-shadow:0 0 4px rgba(212,165,90,0.4);"></div> amber</div>
+          <div class="theme-btn"><div class="theme-circle" style="background:#5A8A8A;box-shadow:0 0 4px rgba(90,138,138,0.4);"></div> teal</div>
+          <div class="theme-btn"><div class="theme-circle" style="background:#B87333;box-shadow:0 0 4px rgba(184,115,51,0.4);"></div> copper</div>
+          <div class="theme-btn"><div class="theme-circle" style="background:#CD6464;box-shadow:0 0 4px rgba(205,100,100,0.4);"></div> solder</div>
+          <div class="theme-btn"><div class="theme-circle" style="background:#E8E4DC;"></div> light</div>
+          <div class="theme-btn"><div class="theme-circle" style="background:#00FF41;box-shadow:0 0 4px rgba(0,255,65,0.3);"></div> matrix</div>
+        </div>
+
+        <div class="blank"></div>
+        <div class="ln sep">  ────────────────────────────────────────────────────────────────────────</div>
+        <div class="blank"></div>
+
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cmd">help</span></div>
+        <div class="blank"></div>
+
+        <div class="help-grid">
+          <div class="help-group">
+            <div class="help-group-title">Navigate</div>
+            <div class="help-row"><span class="help-cmd">about</span><span class="help-desc">event overview</span></div>
+            <div class="help-row"><span class="help-cmd">projects</span><span class="help-desc">browse builds</span></div>
+            <div class="help-row"><span class="help-cmd">projects &lt;name&gt;</span><span class="help-desc">project detail</span></div>
+          </div>
+          <div class="help-group">
+            <div class="help-group-title">Learn</div>
+            <div class="help-row"><span class="help-cmd">learn claude-code</span><span class="help-desc">AI pair programming</span></div>
+            <div class="help-row"><span class="help-cmd">learn arduino</span><span class="help-desc">hardware platform</span></div>
+            <div class="help-row"><span class="help-cmd">learn electronics</span><span class="help-desc">circuit fundamentals</span></div>
+          </div>
+          <div class="help-group">
+            <div class="help-group-title">Actions</div>
+            <div class="help-row"><span class="help-cmd">signup</span><span class="help-desc">register for updates</span></div>
+            <div class="help-row"><span class="help-cmd">theme &lt;name&gt;</span><span class="help-desc">switch colors</span></div>
+            <div class="help-row"><span class="help-cmd">clear</span><span class="help-desc">clear terminal</span></div>
+          </div>
+          <div class="help-group">
+            <div class="help-group-title">Shortcuts</div>
+            <div class="help-row"><span class="help-cmd">Tab</span><span class="help-desc">autocomplete</span></div>
+            <div class="help-row"><span class="help-cmd">&#8593; &#8595;</span><span class="help-desc">command history</span></div>
+            <div class="help-row"><span class="help-cmd">Ctrl+L</span><span class="help-desc">clear screen</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active prompt -->
+      <div class="screen" style="border-bottom:none;">
+        <div class="ln"><span class="prompt">fabricated ~ </span><span class="cursor"></span></div>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="statusbar">
+      <div class="statusbar-left">
+        <div class="status-item"><span class="status-dot status-dot-amber"></span> fabricated v1.0</div>
+        <div class="status-item">theme: amber</div>
+        <div class="status-item">3 modules &middot; 3 projects</div>
+      </div>
+      <div class="statusbar-right">
+        <div class="status-item"><span class="status-dot status-dot-teal"></span> connected</div>
+        <div class="status-item">tab to autocomplete</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
